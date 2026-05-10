@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="SpendSmart.Views.LoginPage"
+             BackgroundColor="#121212"
+             Shell.NavBarIsVisible="False">
+
+    <VerticalStackLayout VerticalOptions="Center" HorizontalOptions="Center" Spacing="20">
+
+        <Label Text="SpendSmart" FontSize="42" FontAttributes="Bold" TextColor="#00E5FF" HorizontalOptions="Center" />
+        <Label Text="แอปพลิเคชันจัดการการเงินส่วนบุคคล" TextColor="#A0A0A0" HorizontalOptions="Center" Margin="0,0,0,30"/>
+
+        <Image Source="dotnet_bot.png" HeightRequest="150" HorizontalOptions="Center" Margin="0,0,0,30" />
+        <Button Text="👆 สแกนเพื่อปลดล็อก" Command="{Binding AuthenticateCommand}" 
+                BackgroundColor="#1E1E1E" TextColor="White" FontAttributes="Bold" 
+                HeightRequest="55" CornerRadius="25" WidthRequest="250" />
+
+    </VerticalStackLayout>
+</ContentPage>

@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:viewmodels="clr-namespace:SpendSmart.ViewModels"
+             x:Class="SpendSmart.Views.ManagePocketsPage"
+             x:Name="RootPage" Title="จัดการกระเป๋าเงิน (Pockets)">
+
+    <ContentPage.Background>
+        <LinearGradientBrush EndPoint="0,1">
+            <GradientStop Color="#FDFBFB" Offset="0.1" />
+            <GradientStop Color="#EBEDEE" Offset="1.0" />
+        </LinearGradientBrush>
+    </ContentPage.Background>
+
+    <ScrollView>
+        <VerticalStackLayout Padding="20" Spacing="20">
+
+            <Frame BackgroundColor="#CCFFFFFF" CornerRadius="30" Padding="25" BorderColor="White" HasShadow="True">
+                <VerticalStackLayout Spacing="15">
+                    <Label Text="Create New Cloud" TextColor="#2C3E50" FontAttributes="Bold" FontSize="20" HorizontalOptions="Center"/>
+
+                    <Picker Title="ประเภทกระเป๋า" ItemsSource="{Binding PocketTypes}" SelectedItem="{Binding SelectedPocketType}" 
+                            BackgroundColor="#F8F9FA" TextColor="#2C3E50" HeightRequest="50"/>
+
+                    <Entry Placeholder="Pocket Name (เช่น ค่าน้ำมัน, ซื้อรถ)" Text="{Binding NewPocketName}" TextColor="#2C3E50" 
+                           BackgroundColor="#F8F9FA" HeightRequest="50" Margin="0,5"/>
+
+                    <VerticalStackLayout Spacing="15" IsVisible="{Binding IsSavingPocket}">
+                        <Entry Placeholder="เป้าหมายที่ต้องการออม (฿)" Text="{Binding NewPocketTarget}" TextColor="#2C3E50" 
+                               BackgroundColor="#F8F9FA" HeightRequest="50" Keyboard="Numeric"/>
+
+                        <HorizontalStackLayout Spacing="15" VerticalOptions="Center" HorizontalOptions="Center">
+                            <Label Text="เป้าหมายถึงวันที่:" VerticalOptions="Center" TextColor="#7F8C8D"/>
+                            <DatePicker Date="{Binding TargetDate}" Format="dd MMM yyyy" BackgroundColor="#F8F9FA" TextColor="#2C3E50"/>
+                        </HorizontalStackLayout>
+
+                        <HorizontalStackLayout Spacing="5" HorizontalOptions="Center" Margin="0,5,0,5">
+                            <Label Text="ต้องออมเดือนละ:" TextColor="#7F8C8D"/>
+                            <Label Text="{Binding CalculatedMonthly, StringFormat='฿{0:N0}'}" TextColor="#D4AF37" FontAttributes="Bold"/>
+                        </HorizontalStackLayout>
+                    </VerticalStackLayout>
+
+                    <Button Text="Create Cloud Pocket" Command="{Binding AddCloudPocketCommand}" 
+                            BackgroundColor="#D4AF37" TextColor="White" 
+                            FontAttributes="Bold" CornerRadius="25" HeightRequest="50" Margin="0,10,0,0"/>
+                </VerticalStackLayout>
+            </Frame>
+
+            <Label Text="กระเป๋าเงินของคุณ" TextColor="#2C3E50" FontAttributes="Bold" FontSize="18" Margin="0,10,0,0" />
+
+            <CollectionView ItemsSource="{Binding Pockets}">
+                <CollectionView.ItemTemplate>
+                    <DataTemplate>
+                        <Frame Margin="0,8" Padding="20" BackgroundColor="#BFFFFFFF" CornerRadius="24" HasShadow="True" BorderColor="White">
+
+                            <Frame.GestureRecognizers>
+                                <DragGestureRecognizer CanDrag="True" 
+                                                       DragStarting="OnDragStarting"
+                                                       DragStartingCommand="{Binding BindingContext.DragStartingCommand, Source={x:Reference RootPage}}" 
+                                                       DragStartingCommandParameter="{Binding .}"/>
+
+                                <DropGestureRecognizer AllowDrop="True" 
+                                                       DropCommand="{Binding BindingContext.DropPocketCommand, Source={x:Reference RootPage}}" 
+                                                       DropCommandParameter="{Binding .}"/>
+                            </Frame.GestureRecognizers>
+
+                            <VerticalStackLayout Spacing="12">
+
+                                <Grid ColumnDefinitions="Auto, *, Auto" ColumnSpacing="15">
+                                    <Frame Grid.Column="0" BackgroundColor="White" BorderColor="#F0F4F8" CornerRadius="16" HeightRequest="50" WidthRequest="50" Padding="0" HasShadow="False">
+                                        <Label Text="{Binding Icon, FallbackValue='📦'}" FontSize="24" HorizontalOptions="Center" VerticalOptions="Center"/>
+                                    </Frame>
+
+                                    <VerticalStackLayout Grid.Column="1" VerticalOptions="Center" Spacing="4">
+                                        <Label Text="{Binding Name}" FontSize="18" FontAttributes="Bold" TextColor="#2C3E50"/>
+                                        <Label Text="แตะค้างเพื่อย้ายเงิน" FontSize="12" TextColor="#95A5A6"/>
+                                    </VerticalStackLayout>
+
+                                    <VerticalStackLayout Grid.Column="2" VerticalOptions="Center" HorizontalOptions="End">
+                                        <Label Text="{Binding CurrentBalance, StringFormat='฿{0:N0}'}" FontSize="20" FontAttributes="Bold" TextColor="#D4AF37"/>
+                                    </VerticalStackLayout>
+                                </Grid>
+
+                                <VerticalStackLayout Spacing="5" Margin="0,5,0,0">
+                                    <ProgressBar Progress="{Binding Progress}" 
+                                                 ProgressColor="#D4AF37" 
+                                                 HeightRequest="8" />
+
+                                    <HorizontalStackLayout HorizontalOptions="End" Spacing="5">
+                                        <Label Text="{Binding ProgressText}" FontSize="12" TextColor="#7F8C8D"/>
+                                        <Label Text="{Binding Progress, StringFormat=' ({0:P0})'}" FontSize="12" TextColor="#D4AF37" FontAttributes="Bold"/>
+                                    </HorizontalStackLayout>
+                                </VerticalStackLayout>
+
+                            </VerticalStackLayout>
+                        </Frame>
+                    </DataTemplate>
+                </CollectionView.ItemTemplate>
+
+                <CollectionView.EmptyView>
+                    <Label Text="ยังไม่มีกระเป๋า ลองสร้างใบแรกด้านบนเลย!" TextColor="#95A5A6" HorizontalOptions="Center" Margin="0,30,0,0"/>
+                </CollectionView.EmptyView>
+
+            </CollectionView>
+
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>

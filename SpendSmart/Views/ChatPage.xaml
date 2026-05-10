@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="SpendSmart.Views.ChatPage"
+             Title="คุยกับ SpendSmart AI"
+             BackgroundColor="#F0F4F8">
+
+    <Grid RowDefinitions="*, Auto">
+
+        <CollectionView Grid.Row="0" ItemsSource="{Binding Messages}">
+            <CollectionView.ItemTemplate>
+                <DataTemplate>
+                    <VerticalStackLayout HorizontalOptions="{Binding Alignment}" Margin="0,5,0,5" MaximumWidthRequest="300">
+                        <Label Text="{Binding SenderName}" FontSize="10" TextColor="#95A5A6" Margin="5,0"/>
+                        <Frame BackgroundColor="{Binding BackgroundColor}" CornerRadius="15" Padding="15,10" HasShadow="False" BorderColor="Transparent">
+                            <Label Text="{Binding Text}" TextColor="{Binding TextColor}" FontSize="14" LineBreakMode="WordWrap"/>
+                        </Frame>
+                    </VerticalStackLayout>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+        </CollectionView>
+
+        <Label Grid.Row="0" Text="AI กำลังคิด..." TextColor="#95A5A6" FontSize="12" FontAttributes="Italic"
+               HorizontalOptions="Start" VerticalOptions="End" Margin="20,5" IsVisible="{Binding IsTyping}"/>
+
+        <Frame Grid.Row="1" BackgroundColor="White" Padding="10" Margin="0" CornerRadius="0" HasShadow="True">
+            <Grid ColumnDefinitions="*, Auto" ColumnSpacing="10">
+                <Entry Grid.Column="0" Text="{Binding InputText}" Placeholder="พิมพ์ถาม AI ที่นี่..." 
+                       BackgroundColor="#F8F9FA" TextColor="#2C3E50" ReturnCommand="{Binding SendMessageCommand}"/>
+
+                <Button Grid.Column="1" Text="ส่ง" Command="{Binding SendMessageCommand}" 
+                        BackgroundColor="#D4AF37" TextColor="White" CornerRadius="20" FontAttributes="Bold" WidthRequest="60"/>
+            </Grid>
+        </Frame>
+    </Grid>
+</ContentPage>

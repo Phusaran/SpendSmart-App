@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="SpendSmart.Views.AddTransactionPage"
+             Title="เพิ่มรายการใหม่">
+
+    <ContentPage.Background>
+        <LinearGradientBrush EndPoint="0,1">
+            <GradientStop Color="#FDFBFB" Offset="0.1" />
+            <GradientStop Color="#EBEDEE" Offset="1.0" />
+        </LinearGradientBrush>
+    </ContentPage.Background>
+
+    <ScrollView>
+        <VerticalStackLayout Padding="20" Spacing="20">
+
+            <Frame BackgroundColor="#A6FFFFFF" CornerRadius="20" HasShadow="True" BorderColor="White" Padding="20">
+                <VerticalStackLayout Spacing="15" HorizontalOptions="Center">
+                    <Label Text="สแกนสลิปโอนเงิน / ใบเสร็จ" TextColor="#2C3E50" FontAttributes="Bold" HorizontalOptions="Center"/>
+                    <Label Text="ให้ AI ช่วยอ่านตัวเลขและวันที่อัตโนมัติ" TextColor="#7F8C8D" FontSize="12" HorizontalOptions="Center"/>
+
+                    <Image Source="{Binding ReceiptImagePath}" HeightRequest="120" Margin="0,10,0,0">
+                        <Image.Triggers>
+                            <DataTrigger TargetType="Image" Binding="{Binding ReceiptImagePath}" Value="{x:Null}">
+                                <Setter Property="IsVisible" Value="False" />
+                            </DataTrigger>
+                        </Image.Triggers>
+                    </Image>
+
+                    <Button Text="🪄 เลือกรูปสลิปเพื่อสแกน" Command="{Binding AutoScanReceiptCommand}" 
+                            BackgroundColor="#2C3E50" TextColor="White" FontAttributes="Bold" 
+                            CornerRadius="25" HeightRequest="50" WidthRequest="250">
+                        <Button.Triggers>
+                            <DataTrigger TargetType="Button" Binding="{Binding IsScanning}" Value="True">
+                                <Setter Property="IsVisible" Value="False" />
+                            </DataTrigger>
+                        </Button.Triggers>
+                    </Button>
+                    <Button Text="{Binding VoiceButtonText}" Command="{Binding ToggleVoiceRecordCommand}" 
+                            BackgroundColor="{Binding VoiceButtonColor}" TextColor="White" 
+                            CornerRadius="20" HeightRequest="50" FontAttributes="Bold" Margin="0,10,0,0"/>
+                    <HorizontalStackLayout Spacing="10" HorizontalOptions="Center" IsVisible="{Binding IsScanning}">
+                        <ActivityIndicator IsRunning="True" Color="#D4AF37" WidthRequest="20" HeightRequest="20"/>
+                        <Label Text="AI กำลังอ่านตัวเลขจากสลิป..." TextColor="#D4AF37" FontAttributes="Bold" VerticalOptions="Center"/>
+                    </HorizontalStackLayout>
+                </VerticalStackLayout>
+            </Frame>
+
+            <Frame BackgroundColor="#CCFFFFFF" CornerRadius="30" Padding="25" BorderColor="White" HasShadow="True">
+                <VerticalStackLayout Spacing="15">
+
+                    <Label Text="รายละเอียดรายการ" TextColor="#2C3E50" FontAttributes="Bold" FontSize="18"/>
+
+                    <Picker ItemsSource="{Binding TransactionTypes}" SelectedItem="{Binding SelectedType}" 
+                            TextColor="#2C3E50" BackgroundColor="#F8F9FA" Title="เลือกประเภท (รายรับ/รายจ่าย)"/>
+
+                    <Entry Keyboard="Numeric" Text="{Binding Amount}" 
+                           TextColor="#D4AF37" BackgroundColor="#F8F9FA" Placeholder="จำนวนเงิน (฿)" FontAttributes="Bold" FontSize="18"/>
+
+                    <Picker ItemsSource="{Binding Pockets}" SelectedItem="{Binding SelectedPocket}" ItemDisplayBinding="{Binding Name}"
+                            TextColor="#2C3E50" BackgroundColor="#F8F9FA" Title="เลือกกระเป๋าเงิน (Cloud Pocket)"/>
+
+                    <Entry Text="{Binding SubCategory}" TextColor="#2C3E50" BackgroundColor="#F8F9FA" Placeholder="หมวดหมู่ (เช่น อาหาร, ช้อปปิ้ง)"/>
+
+                    <DatePicker Date="{Binding Date}" TextColor="#2C3E50" BackgroundColor="#F8F9FA" />
+
+                    <Entry Text="{Binding Note}" TextColor="#2C3E50" BackgroundColor="#F8F9FA" Placeholder="บันทึกช่วยจำ..."/>
+
+                    <Button Text="บันทึกรายการ" Command="{Binding SaveTransactionCommand}" 
+                            BackgroundColor="#D4AF37" TextColor="White" FontAttributes="Bold" CornerRadius="25" HeightRequest="50" Margin="0,15,0,0" />
+
+                </VerticalStackLayout>
+            </Frame>
+
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>

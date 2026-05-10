@@ -1,0 +1,61 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:viewmodels="clr-namespace:SpendSmart.ViewModels"
+             x:Class="SpendSmart.Views.MainPage"
+             Title="SpendSmart">
+
+    <ContentPage.Background>
+        <LinearGradientBrush EndPoint="0,1">
+            <GradientStop Color="#FDFBFB" Offset="0.1" />
+            <GradientStop Color="#EBEDEE" Offset="1.0" />
+        </LinearGradientBrush>
+    </ContentPage.Background>
+
+    <ScrollView>
+        <VerticalStackLayout Padding="20" Spacing="25">
+
+            <VerticalStackLayout HorizontalOptions="Center" Spacing="5" Margin="0,20">
+                <Label Text="ยอดเงินรวมทั้งหมด" TextColor="#7F8C8D" HorizontalOptions="Center" FontSize="14" CharacterSpacing="1"/>
+                <Label Text="{Binding TotalBalance, StringFormat='฿ {0:N2}'}" 
+                       TextColor="#2C3E50" FontSize="44" FontAttributes="Bold" HorizontalOptions="Center" />
+            </VerticalStackLayout>
+
+            <Label Text="Cloud Pockets" TextColor="#2C3E50" FontSize="20" FontAttributes="Bold" />
+
+            <CollectionView ItemsSource="{Binding Pockets}">
+                <CollectionView.ItemTemplate>
+                    <DataTemplate>
+                        <Frame Margin="0,0,0,15" Padding="20" BackgroundColor="#BFFFFFFF" CornerRadius="24" HasShadow="True" BorderColor="White">
+                            <Grid ColumnDefinitions="Auto, *, Auto" RowDefinitions="Auto, Auto" RowSpacing="12">
+
+                                <Frame Grid.Column="0" BackgroundColor="White" CornerRadius="16" HeightRequest="48" WidthRequest="48" Padding="0" HasShadow="False" BorderColor="#F0F4F8">
+                                    <Label Text="{Binding Icon, FallbackValue='💰'}" FontSize="22" HorizontalOptions="Center" VerticalOptions="Center"/>
+                                </Frame>
+
+                                <VerticalStackLayout Grid.Column="1" VerticalOptions="Center" Margin="15,0">
+                                    <Label Text="{Binding Name}" FontSize="18" FontAttributes="Bold" TextColor="#2C3E50"/>
+                                    <Label Text="{Binding GoalAmount, StringFormat='เป้าหมาย ฿{0:N0}'}" FontSize="12" TextColor="#95A5A6"/>
+                                </VerticalStackLayout>
+
+                                <Label Grid.Column="2" Text="{Binding CurrentBalance, StringFormat='฿{0:N0}'}" 
+                                       FontSize="20" FontAttributes="Bold" TextColor="#D4AF37" VerticalOptions="Center"/>
+
+                                <ProgressBar Grid.Row="1" Grid.ColumnSpan="3" Progress="{Binding Progress}" ProgressColor="#D4AF37" HeightRequest="6" />
+                            </Grid>
+                        </Frame>
+                    </DataTemplate>
+                </CollectionView.ItemTemplate>
+
+                <CollectionView.EmptyView>
+                    <Label Text="ยังไม่มีกระเป๋าเงิน ลองสร้างที่หน้ากระเป๋าเงินดูนะ!" TextColor="#95A5A6" HorizontalOptions="Center" Margin="0,30,0,0"/>
+                </CollectionView.EmptyView>
+            </CollectionView>
+
+            <Button Text="+ เพิ่มรายการใหม่" Command="{Binding GoToAddTransactionCommand}" 
+                    BackgroundColor="#D4AF37" TextColor="White" FontAttributes="Bold" 
+                    CornerRadius="25" HeightRequest="56" Shadow="{Shadow Brush=Black, Offset='0,5', Radius=10, Opacity=0.15}" />
+
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>

@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="SpendSmart.Views.DashboardPage"
+             Title="ภาพรวมการใช้จ่าย">
+
+    <ScrollView>
+        <VerticalStackLayout Padding="20" Spacing="25">
+            <Frame BackgroundColor="#1A1A1D" CornerRadius="20" Padding="20" HasShadow="True" BorderColor="{Binding RankColor}">
+                <Grid ColumnDefinitions="Auto, *">
+                    <VerticalStackLayout Grid.Column="0" Spacing="0" VerticalOptions="Center" Margin="0,0,15,0">
+                        <Frame BackgroundColor="{Binding RankColor}" CornerRadius="25" HeightRequest="50" WidthRequest="50" Padding="0" HasShadow="True">
+                            <Label Text="{Binding UserLevel}" TextColor="White" FontSize="22" FontAttributes="Bold" HorizontalOptions="Center" VerticalOptions="Center"/>
+                        </Frame>
+                    </VerticalStackLayout>
+
+                    <VerticalStackLayout Grid.Column="1" Spacing="5" VerticalOptions="Center">
+                        <Label Text="นักออมระดับ" TextColor="#95A5A6" FontSize="12"/>
+                        <Label Text="{Binding RankName}" TextColor="{Binding RankColor}" FontSize="24" FontAttributes="Bold" TextTransform="Uppercase"/>
+
+                        <Grid ColumnDefinitions="*, Auto" Margin="0,5,0,0">
+                            <ProgressBar Grid.Column="0" Progress="{Binding ExpProgress}" ProgressColor="{Binding RankColor}" BackgroundColor="#2C3E50" HeightRequest="8" VerticalOptions="Center"/>
+                            <Label Grid.Column="1" Text="{Binding ExpText}" TextColor="#BDC3C7" FontSize="10" Margin="10,0,0,0" VerticalOptions="Center"/>
+                        </Grid>
+                    </VerticalStackLayout>
+                </Grid>
+            </Frame>
+            <Frame BackgroundColor="#2C3E50" CornerRadius="20" Padding="25">
+                <VerticalStackLayout HorizontalOptions="Center">
+                    <Label Text="รายจ่ายทั้งหมดเดือนนี้" TextColor="#BDC3C7" HorizontalOptions="Center"/>
+                    <Label Text="{Binding TotalExpense, StringFormat='฿{0:N2}'}" 
+                           TextColor="#D4AF37" FontSize="36" FontAttributes="Bold"/>
+                </VerticalStackLayout>
+            </Frame>
+
+            <Label Text="แยกตามหมวดหมู่" FontAttributes="Bold" FontSize="20" TextColor="#2C3E50"/>
+
+            <CollectionView ItemsSource="{Binding CategoryData}">
+                <CollectionView.ItemTemplate>
+                    <DataTemplate>
+                        <Grid Padding="10" ColumnDefinitions="*, Auto">
+                            <VerticalStackLayout Grid.Column="0" Spacing="2">
+                                <Label Text="{Binding CategoryName}" FontAttributes="Bold" FontSize="16"/>
+                                <ProgressBar Progress="{Binding Percentage}" ProgressColor="#3498DB" />
+                            </VerticalStackLayout>
+                            <Label Grid.Column="1" Text="{Binding Amount, StringFormat='฿{0:N0}'}" 
+                                   VerticalOptions="Center" FontAttributes="Bold" TextColor="#E74C3C"/>
+                        </Grid>
+                    </DataTemplate>
+                </CollectionView.ItemTemplate>
+            </CollectionView>
+
+            <Frame BackgroundColor="#F8F9FA" CornerRadius="20" Padding="20" BorderColor="#D4AF37">
+                <VerticalStackLayout Spacing="15">
+                    <HorizontalStackLayout Spacing="10" HorizontalOptions="Center">
+                        <Label Text="🤖" FontSize="24"/>
+                        <Label Text="ที่ปรึกษา AI" FontAttributes="Bold" FontSize="18" TextColor="#2C3E50" VerticalOptions="Center"/>
+                    </HorizontalStackLayout>
+
+                    <Button Text="✨ วิเคราะห์ข้อมูลเดือนนี้" Command="{Binding AskAiForAdviceCommand}" 
+                            BackgroundColor="#D4AF37" TextColor="White" CornerRadius="20" HeightRequest="45"/>
+                    <Button Text="💬 คุยกับ AI แบบแชทส่วนตัว" Command="{Binding GoToChatCommand}" 
+                            BackgroundColor="#2C3E50" TextColor="White" CornerRadius="20" HeightRequest="45" Margin="0,10,0,0"/>
+                    <ActivityIndicator IsRunning="True" Color="#D4AF37" IsVisible="{Binding IsAiThinking}" HorizontalOptions="Center"/>
+
+                    <Label Text="{Binding AiAdvice}" TextColor="#2C3E50" FontSize="14" LineBreakMode="WordWrap"/>
+                </VerticalStackLayout>
+            </Frame>
+
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>
