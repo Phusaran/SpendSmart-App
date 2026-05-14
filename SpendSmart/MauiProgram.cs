@@ -35,6 +35,7 @@ namespace SpendSmart
             builder.Services.AddTransient<SpendSmart.ViewModels.LoginViewModel>();
             builder.Services.AddTransient<SpendSmart.ViewModels.DashboardViewModel>();
             builder.Services.AddSingleton<SpendSmart.ViewModels.ChatViewModel>();
+            builder.Services.AddTransient<BackupViewModel>();
 
             // --- Views (Pages) ---
             builder.Services.AddTransient<SpendSmart.Views.MainPage>();
@@ -44,6 +45,7 @@ namespace SpendSmart
             builder.Services.AddTransient<SpendSmart.Views.LoginPage>();
             builder.Services.AddTransient<SpendSmart.Views.DashboardPage>();
             builder.Services.AddSingleton<SpendSmart.Views.ChatPage>();
+            builder.Services.AddTransient<BackupPage>();
 
             builder.Services.AddSingleton(Plugin.Maui.Audio.AudioManager.Current);
             return builder.Build();

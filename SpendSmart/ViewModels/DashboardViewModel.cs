@@ -143,5 +143,11 @@ namespace SpendSmart.ViewModels
 
             IsAiThinking = false;
         }
+        [RelayCommand]
+        public async Task GoToBackupAsync()
+        {
+            // สั่งให้แอปเปลี่ยนหน้าไปยัง BackupPage
+            await Shell.Current.GoToAsync(nameof(SpendSmart.Views.BackupPage));
+        }
     }
 }

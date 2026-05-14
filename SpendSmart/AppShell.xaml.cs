@@ -1,4 +1,6 @@
-﻿namespace SpendSmart
+﻿using SpendSmart.Views;
+
+namespace SpendSmart
 {
     public partial class AppShell : Shell
     {
@@ -9,6 +11,7 @@
             Routing.RegisterRoute("AddTransactionPage", typeof(Views.AddTransactionPage));
             Routing.RegisterRoute("ManagePocketsPage", typeof(Views.ManagePocketsPage));
             Routing.RegisterRoute("ChatPage", typeof(Views.ChatPage));
+            Routing.RegisterRoute(nameof(BackupPage), typeof(BackupPage));
         }
     }
 }

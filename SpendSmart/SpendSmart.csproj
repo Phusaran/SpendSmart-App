@@ -28,9 +28,7 @@
 	<ItemGroup>
 		<MauiIcon Include="Resources\AppIcon\appicon.png" Color="#121212" />
 
-		<MauiSplashScreen Include="Resources\Splash\splash.png"
-						  Color="#121212"
-						  BaseSize="256,256" />
+		<MauiSplashScreen Include="Resources\Splash\splash.png" Color="#121212" BaseSize="256,256" />
 
 		<MauiImage Include="Resources\Images\*" />
 
@@ -52,6 +50,9 @@
 	<ItemGroup>
 		<MauiXaml Update="Views\AddTransactionPage.xaml">
 			<Generator>MSBuild:Compile</Generator>
+		</MauiXaml>
+		<MauiXaml Update="Views\BackupPage.xaml">
+		  <Generator>MSBuild:Compile</Generator>
 		</MauiXaml>
 		<MauiXaml Update="Views\ChatPage.xaml">
 			<Generator>MSBuild:Compile</Generator>

@@ -3,7 +3,9 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="SpendSmart.Views.DashboardPage"
              Title="ภาพรวมการใช้จ่าย">
-
+    <ContentPage.ToolbarItems>
+        <ToolbarItem Text="⚙️ ข้อมูล" Command="{Binding GoToBackupCommand}" />
+    </ContentPage.ToolbarItems>
     <ScrollView>
         <VerticalStackLayout Padding="20" Spacing="25">
             <Frame BackgroundColor="#1A1A1D" CornerRadius="20" Padding="20" HasShadow="True" BorderColor="{Binding RankColor}">
