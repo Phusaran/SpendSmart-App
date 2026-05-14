@@ -51,49 +51,62 @@
             <CollectionView ItemsSource="{Binding Pockets}">
                 <CollectionView.ItemTemplate>
                     <DataTemplate>
-                        <Frame Margin="0,8" Padding="20" BackgroundColor="#BFFFFFFF" CornerRadius="24" HasShadow="True" BorderColor="White">
 
-                            <Frame.GestureRecognizers>
-                                <DragGestureRecognizer CanDrag="True" 
-                                                       DragStarting="OnDragStarting"
-                                                       DragStartingCommand="{Binding BindingContext.DragStartingCommand, Source={x:Reference RootPage}}" 
-                                                       DragStartingCommandParameter="{Binding .}"/>
+                        <SwipeView Margin="0,8">
+                            <SwipeView.RightItems>
+                                <SwipeItems Mode="Reveal">
+                                    <SwipeItemView Command="{Binding BindingContext.DeletePocketCommand, Source={x:Reference RootPage}}"
+                                                   CommandParameter="{Binding .}">
+                                        <Frame WidthRequest="90" BackgroundColor="#E74C3C" CornerRadius="24" Margin="10,0,0,0" Padding="0" HasShadow="False" BorderColor="Transparent">
+                                            <Label Text="Delete" TextColor="White" FontAttributes="Bold" HorizontalOptions="Center" VerticalOptions="Center"/>
+                                        </Frame>
+                                    </SwipeItemView>
+                                </SwipeItems>
+                            </SwipeView.RightItems>
 
-                                <DropGestureRecognizer AllowDrop="True" 
-                                                       DropCommand="{Binding BindingContext.DropPocketCommand, Source={x:Reference RootPage}}" 
-                                                       DropCommandParameter="{Binding .}"/>
-                            </Frame.GestureRecognizers>
+                            <Frame Padding="20" BackgroundColor="#BFFFFFFF" CornerRadius="24" HasShadow="True" BorderColor="White">
 
-                            <VerticalStackLayout Spacing="12">
+                                <Frame.GestureRecognizers>
+                                    <DragGestureRecognizer CanDrag="True" 
+                                                           DragStarting="OnDragStarting"
+                                                           DragStartingCommand="{Binding BindingContext.DragStartingCommand, Source={x:Reference RootPage}}" 
+                                                           DragStartingCommandParameter="{Binding .}"/>
 
-                                <Grid ColumnDefinitions="Auto, *, Auto" ColumnSpacing="15">
-                                    <Frame Grid.Column="0" BackgroundColor="White" BorderColor="#F0F4F8" CornerRadius="16" HeightRequest="50" WidthRequest="50" Padding="0" HasShadow="False">
-                                        <Label Text="{Binding Icon, FallbackValue='📦'}" FontSize="24" HorizontalOptions="Center" VerticalOptions="Center"/>
-                                    </Frame>
+                                    <DropGestureRecognizer AllowDrop="True" 
+                                                           DropCommand="{Binding BindingContext.DropPocketCommand, Source={x:Reference RootPage}}" 
+                                                           DropCommandParameter="{Binding .}"/>
+                                </Frame.GestureRecognizers>
 
-                                    <VerticalStackLayout Grid.Column="1" VerticalOptions="Center" Spacing="4">
-                                        <Label Text="{Binding Name}" FontSize="18" FontAttributes="Bold" TextColor="#2C3E50"/>
-                                        <Label Text="แตะค้างเพื่อย้ายเงิน" FontSize="12" TextColor="#95A5A6"/>
+                                <VerticalStackLayout Spacing="12">
+                                    <Grid ColumnDefinitions="Auto, *, Auto" ColumnSpacing="15">
+                                        <Frame Grid.Column="0" BackgroundColor="White" BorderColor="#F0F4F8" CornerRadius="16" HeightRequest="50" WidthRequest="50" Padding="0" HasShadow="False">
+                                            <Label Text="{Binding Icon, FallbackValue='📦'}" FontSize="24" HorizontalOptions="Center" VerticalOptions="Center"/>
+                                        </Frame>
+
+                                        <VerticalStackLayout Grid.Column="1" VerticalOptions="Center" Spacing="4">
+                                            <Label Text="{Binding Name}" FontSize="18" FontAttributes="Bold" TextColor="#2C3E50"/>
+                                            <Label Text="ปัดซ้ายเพื่อลบ / แตะค้างเพื่อย้ายเงิน" FontSize="12" TextColor="#95A5A6"/>
+                                        </VerticalStackLayout>
+
+                                        <VerticalStackLayout Grid.Column="2" VerticalOptions="Center" HorizontalOptions="End">
+                                            <Label Text="{Binding CurrentBalance, StringFormat='฿{0:N0}'}" FontSize="20" FontAttributes="Bold" TextColor="#D4AF37"/>
+                                        </VerticalStackLayout>
+                                    </Grid>
+
+                                    <VerticalStackLayout Spacing="5" Margin="0,5,0,0">
+                                        <ProgressBar Progress="{Binding Progress}" 
+                                                     ProgressColor="#D4AF37" 
+                                                     HeightRequest="8" />
+
+                                        <HorizontalStackLayout HorizontalOptions="End" Spacing="5">
+                                            <Label Text="{Binding ProgressText}" FontSize="12" TextColor="#7F8C8D"/>
+                                            <Label Text="{Binding Progress, StringFormat=' ({0:P0})'}" FontSize="12" TextColor="#D4AF37" FontAttributes="Bold"/>
+                                        </HorizontalStackLayout>
                                     </VerticalStackLayout>
-
-                                    <VerticalStackLayout Grid.Column="2" VerticalOptions="Center" HorizontalOptions="End">
-                                        <Label Text="{Binding CurrentBalance, StringFormat='฿{0:N0}'}" FontSize="20" FontAttributes="Bold" TextColor="#D4AF37"/>
-                                    </VerticalStackLayout>
-                                </Grid>
-
-                                <VerticalStackLayout Spacing="5" Margin="0,5,0,0">
-                                    <ProgressBar Progress="{Binding Progress}" 
-                                                 ProgressColor="#D4AF37" 
-                                                 HeightRequest="8" />
-
-                                    <HorizontalStackLayout HorizontalOptions="End" Spacing="5">
-                                        <Label Text="{Binding ProgressText}" FontSize="12" TextColor="#7F8C8D"/>
-                                        <Label Text="{Binding Progress, StringFormat=' ({0:P0})'}" FontSize="12" TextColor="#D4AF37" FontAttributes="Bold"/>
-                                    </HorizontalStackLayout>
                                 </VerticalStackLayout>
+                            </Frame>
 
-                            </VerticalStackLayout>
-                        </Frame>
+                        </SwipeView>
                     </DataTemplate>
                 </CollectionView.ItemTemplate>
 
@@ -102,7 +115,6 @@
                 </CollectionView.EmptyView>
 
             </CollectionView>
-
         </VerticalStackLayout>
     </ScrollView>
 </ContentPage>

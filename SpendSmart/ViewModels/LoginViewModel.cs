@@ -10,7 +10,7 @@ namespace SpendSmart.ViewModels
         [RelayCommand]
         public async Task AuthenticateAsync()
         {
-            var isAvailable = await CrossFingerprint.Current.IsAvailableAsync(true);
+                    var isAvailable = await CrossFingerprint.Current.IsAvailableAsync(true);
 
             if (!isAvailable)
             {

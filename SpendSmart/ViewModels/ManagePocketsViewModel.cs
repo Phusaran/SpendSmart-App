@@ -1,10 +1,12 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using CommunityToolkit.Mvvm.Messaging;
+using SpendSmart.Messages;
 using SpendSmart.Models;
 using SpendSmart.Services;
-using System.Collections.ObjectModel;
-using System.Collections.Generic;
 using System;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Threading.Tasks;
 
 namespace SpendSmart.ViewModels
@@ -19,11 +21,9 @@ namespace SpendSmart.ViewModels
         [ObservableProperty] private DateTime _targetDate = DateTime.Now.AddMonths(6);
         [ObservableProperty] private decimal _calculatedMonthly;
 
-        // 🌟 1. เพิ่มตัวแปรสำหรับ Dropdown เลือกประเภท
         public List<string> PocketTypes { get; } = new() { "Saving (เงินเก็บ)", "Spending (ใช้จ่าย)" };
-        [ObservableProperty] private string _selectedPocketType = "Saving (เงินเก็บ)";
 
-        // 🌟 2. ตัวแปรควบคุมการโชว์ช่องเป้าหมายและวันที่
+        [ObservableProperty] private string _selectedPocketType = "Saving (เงินเก็บ)";
         [ObservableProperty] private bool _isSavingPocket = true;
 
         public ObservableCollection<Pocket> Pockets { get; set; } = new();
@@ -31,9 +31,13 @@ namespace SpendSmart.ViewModels
         public ManagePocketsViewModel(DatabaseService databaseService)
         {
             _databaseService = databaseService;
+
+            WeakReferenceMessenger.Default.Register<TransactionChangedMessage>(this, async (recipient, message) =>
+            {
+                await LoadPocketsAsync();
+            });
         }
 
-        // 🌟 3. เมื่อเปลี่ยนประเภทกระเป๋า ให้ซ่อน/โชว์ ช่องเป้าหมายอัตโนมัติ
         partial void OnSelectedPocketTypeChanged(string value)
         {
             IsSavingPocket = value.Contains("Saving");
@@ -41,14 +45,19 @@ namespace SpendSmart.ViewModels
         }
 
         partial void OnNewPocketTargetChanged(decimal value) => UpdateCalculation();
+
         partial void OnTargetDateChanged(DateTime value) => UpdateCalculation();
 
         private void UpdateCalculation()
         {
-            if (!IsSavingPocket) return; // ถ้าเป็นกระเป๋าใช้จ่าย ไม่ต้องคำนวณเดือน
+            if (!IsSavingPocket)
+                return;
 
             int months = ((TargetDate.Year - DateTime.Now.Year) * 12) + TargetDate.Month - DateTime.Now.Month;
-            if (months <= 0) months = 1;
+
+            if (months <= 0)
+                months = 1;
+
             CalculatedMonthly = NewPocketTarget / months;
         }
 
@@ -56,8 +65,13 @@ namespace SpendSmart.ViewModels
         public async Task LoadPocketsAsync()
         {
             var pockets = await _databaseService.GetPocketsAsync();
+
             Pockets.Clear();
-            foreach (var p in pockets) Pockets.Add(p);
+
+            foreach (var p in pockets)
+            {
+                Pockets.Add(p);
+            }
         }
 
         [RelayCommand]
@@ -75,7 +89,6 @@ namespace SpendSmart.ViewModels
                 return;
             }
 
-            // 🌟 4. บันทึกข้อมูลแยกตามประเภท
             var pocket = new Pocket
             {
                 Name = NewPocketName,
@@ -91,12 +104,13 @@ namespace SpendSmart.ViewModels
             await _databaseService.SavePocketAsync(pocket);
             await LoadPocketsAsync();
 
-            // เคลียร์ช่อง
             NewPocketName = string.Empty;
             NewPocketTarget = 0;
             TargetDate = DateTime.Now.AddMonths(6);
             CalculatedMonthly = 0;
-            SelectedPocketType = "Saving (เงินเก็บ)"; // รีเซ็ตกลับเป็นค่าเดิม
+            SelectedPocketType = "Saving (เงินเก็บ)";
+
+            WeakReferenceMessenger.Default.Send(new TransactionChangedMessage());
 
             await Shell.Current.DisplayAlert("สำเร็จ", "สร้าง Cloud Pocket เรียบร้อย", "ตกลง");
         }
@@ -104,30 +118,30 @@ namespace SpendSmart.ViewModels
         [RelayCommand]
         public async Task DeletePocketAsync(Pocket pocket)
         {
-            // 1. ป้องกันการลบกระเป๋าที่เป็นค่าเริ่มต้น (ถ้ามีระบบ Default)
+            if (pocket == null)
+                return;
+
             if (pocket.IsDefault)
             {
                 await Shell.Current.DisplayAlert("แจ้งเตือน", "ไม่สามารถลบกระเป๋าหลักได้", "ตกลง");
                 return;
             }
 
-            // 2. ถามเพื่อความแน่ใจก่อนลบจริง
             bool confirm = await Shell.Current.DisplayAlert(
                 "ยืนยันการลบ",
-                $"คุณต้องการลบกระเป๋า '{pocket.Name}' ใช่หรือไม่?\n(ข้อมูลยอดเงินในกระเป๋านี้จะหายไป)",
-                "ลบเลย", "ยกเลิก");
+                $"ต้องการลบกระเป๋า '{pocket.Name}' ใช่หรือไม่?\n\nรายการประวัติทั้งหมดของกระเป๋านี้จะถูกลบด้วย",
+                "ลบ",
+                "ยกเลิก");
 
-            if (confirm)
-            {
-                // 3. ลบข้อมูลจากฐานข้อมูล SQLite
-                await _databaseService.DeletePocketAsync(pocket);
+            if (!confirm)
+                return;
 
-                // 4. อัปเดตรายการบนหน้าจอทันที
-                await LoadPocketsAsync();
+            await _databaseService.DeletePocketAndTransactionsAsync(pocket);
+            await LoadPocketsAsync();
 
-                // (เพิ่มเติม) ถ้าแอปมีการคำนวณยอดรวมในหน้าอื่น อย่าลืมส่งสัญญาณแจ้งเตือนด้วยครับ
-                await Shell.Current.DisplayAlert("สำเร็จ", "ลบกระเป๋าเรียบร้อยแล้ว", "ตกลง");
-            }
+            WeakReferenceMessenger.Default.Send(new TransactionChangedMessage());
+
+            await Shell.Current.DisplayAlert("สำเร็จ", "ลบกระเป๋าเรียบร้อยแล้ว", "ตกลง");
         }
 
         private Pocket _draggedPocket;
@@ -137,26 +151,23 @@ namespace SpendSmart.ViewModels
         {
             _draggedPocket = pocket;
         }
+
         [RelayCommand]
         public async Task DropPocketAsync(Pocket destinationPocket)
         {
-            // 1. ถ้าไม่ได้ลาก หรือลากไปใส่กระเป๋าเดิม ให้ยกเลิก
-            if (_draggedPocket == null || _draggedPocket.Id == destinationPocket.Id)
+            if (_draggedPocket == null || destinationPocket == null || _draggedPocket.Id == destinationPocket.Id)
             {
                 _draggedPocket = null;
                 return;
             }
 
-            // 2. เด้ง Popup ถามจำนวนเงินที่ต้องการโอน (ย้ายเงิน)
             string amountStr = await Shell.Current.DisplayPromptAsync(
                 "ย้ายเงิน (Drag & Drop)",
                 $"โอนจาก '{_draggedPocket.Name}'\nไปยัง '{destinationPocket.Name}'\n\nระบุจำนวนเงิน:",
                 keyboard: Keyboard.Numeric);
 
-            // 3. ตรวจสอบว่ากรอกตัวเลขถูกต้องและมากกว่า 0 ไหม
             if (decimal.TryParse(amountStr, out decimal amount) && amount > 0)
             {
-                // เช็กว่าเงินในกระเป๋าต้นทางมีพอให้โอนไหม
                 if (_draggedPocket.CurrentBalance < amount)
                 {
                     await Shell.Current.DisplayAlert("ไม่สำเร็จ", "ยอดเงินในกระเป๋าต้นทางไม่เพียงพอ", "ตกลง");
@@ -164,19 +175,17 @@ namespace SpendSmart.ViewModels
                     return;
                 }
 
-                // หักเงินต้นทาง และเพิ่มเงินปลายทาง
                 _draggedPocket.CurrentBalance -= amount;
                 destinationPocket.CurrentBalance += amount;
 
-                // บันทึกลง Database
                 await _databaseService.SavePocketAsync(_draggedPocket);
                 await _databaseService.SavePocketAsync(destinationPocket);
 
-                // รีเฟรชหน้าจอใหม่
                 await LoadPocketsAsync();
+
+                WeakReferenceMessenger.Default.Send(new TransactionChangedMessage());
             }
 
-            // ล้างค่าหลังจากจบกระบวนการ
             _draggedPocket = null;
         }
     }

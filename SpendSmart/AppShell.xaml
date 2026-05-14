@@ -5,22 +5,36 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     xmlns:views="clr-namespace:SpendSmart.Views"
     Shell.TabBarBackgroundColor="#1E1E1E"
-    Shell.TabBarTitleColor="#00E5FF"
+    Shell.TabBarTitleColor="#D4AF37"
+    Shell.TabBarForegroundColor="#D4AF37"
     Shell.TabBarUnselectedColor="#A0A0A0">
 
     <TabBar>
-        <Tab Title="ภาพรวม" Icon="dotnet_bot.png">
+        <Tab Title="ภาพรวม">
+            <Tab.Icon>
+                <FontImageSource Glyph="💰" Size="24" Color="#D4AF37" />
+            </Tab.Icon>
             <ShellContent ContentTemplate="{DataTemplate views:MainPage}" />
         </Tab>
 
-        <Tab Title="ประวัติ" Icon="dotnet_bot.png">
+        <Tab Title="ประวัติ">
+            <Tab.Icon>
+                <FontImageSource Glyph="💰" Size="24" Color="#D4AF37" />
+            </Tab.Icon>
             <ShellContent ContentTemplate="{DataTemplate views:HistoryPage}" />
         </Tab>
-        <Tab Title="วิเคราะห์" Icon="dotnet_bot.png">
+
+        <Tab Title="วิเคราะห์">
+            <Tab.Icon>
+                <FontImageSource Glyph="💰" Size="24" Color="#D4AF37" />
+            </Tab.Icon>
             <ShellContent ContentTemplate="{DataTemplate views:DashboardPage}" Route="DashboardPage" />
         </Tab>
 
-        <Tab Title="กระเป๋าเงิน" Icon="dotnet_bot.png">
+        <Tab Title="กระเป๋าเงิน">
+            <Tab.Icon>
+                <FontImageSource Glyph="💰" Size="24" Color="#D4AF37" />
+            </Tab.Icon>
             <ShellContent ContentTemplate="{DataTemplate views:ManagePocketsPage}" />
         </Tab>
     </TabBar>

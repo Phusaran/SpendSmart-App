@@ -2,6 +2,7 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="SpendSmart.Views.HistoryPage"
+             x:Name="RootPage"
              Title="ประวัติรายการ">
 
     <ContentPage.Background>
@@ -15,41 +16,115 @@
         <CollectionView ItemsSource="{Binding Transactions}">
             <CollectionView.ItemTemplate>
                 <DataTemplate>
-                    <Frame Margin="0,5" Padding="15" BackgroundColor="White" CornerRadius="15" HasShadow="True" BorderColor="#F0F4F8">
 
-                        <Grid ColumnDefinitions="Auto, *, Auto" ColumnSpacing="15">
+                    <SwipeView Margin="0,5">
+                        <SwipeView.RightItems>
+                            <SwipeItems Mode="Reveal">
+                                <SwipeItemView Command="{Binding BindingContext.DeleteTransactionCommand, Source={x:Reference RootPage}}"
+                                               CommandParameter="{Binding .}">
+                                    <Grid WidthRequest="90"
+                                          BackgroundColor="#E74C3C">
+                                        <Label Text="Delete"
+                                               TextColor="White"
+                                               FontAttributes="Bold"
+                                               HorizontalOptions="Center"
+                                               VerticalOptions="Center"/>
+                                    </Grid>
+                                </SwipeItemView>
+                            </SwipeItems>
+                        </SwipeView.RightItems>
 
-                            <Frame Grid.Column="0" WidthRequest="60" HeightRequest="80" CornerRadius="8" Padding="0" IsClippedToBounds="True" BackgroundColor="#F8F9FA" BorderColor="Transparent">
-                                <Image Source="{Binding ReceiptImagePath}" Aspect="AspectFill">
-                                    <Image.Triggers>
-                                        <DataTrigger TargetType="Image" Binding="{Binding ReceiptImagePath}" Value="{x:Null}">
-                                            <Setter Property="IsVisible" Value="False" />
-                                        </DataTrigger>
-                                        <DataTrigger TargetType="Image" Binding="{Binding ReceiptImagePath}" Value="">
-                                            <Setter Property="IsVisible" Value="False" />
-                                        </DataTrigger>
-                                    </Image.Triggers>
-                                </Image>
-                            </Frame>
+                        <Frame Padding="15"
+                               BackgroundColor="White"
+                               CornerRadius="15"
+                               HasShadow="True"
+                               BorderColor="#F0F4F8">
 
-                            <VerticalStackLayout Grid.Column="1" Spacing="2" VerticalOptions="Center">
-                                <Label Text="{Binding SubCategory, TargetNullValue='ทั่วไป'}" FontAttributes="Bold" FontSize="16" TextColor="#2C3E50"/>
-                                <Label Text="{Binding Note}" FontSize="12" TextColor="#7F8C8D" LineBreakMode="TailTruncation" MaxLines="1"/>
-                                <Label Text="{Binding Date, StringFormat='{0:dd MMM yyyy HH:mm}'}" FontSize="10" TextColor="#BDC3C7"/>
-                            </VerticalStackLayout>
+                            <Grid ColumnDefinitions="Auto, *, Auto"
+                                  ColumnSpacing="15">
 
-                            <Label Grid.Column="2" Text="{Binding Amount, StringFormat='฿{0:N2}'}" 
-                                   VerticalOptions="Center" FontAttributes="Bold" TextColor="#E74C3C" FontSize="16"/>
+                                <Frame Grid.Column="0"
+                                       WidthRequest="60"
+                                       HeightRequest="80"
+                                       CornerRadius="8"
+                                       Padding="0"
+                                       IsClippedToBounds="True"
+                                       BackgroundColor="#F8F9FA"
+                                       BorderColor="Transparent">
 
-                        </Grid>
-                    </Frame>
+                                    <Image Source="{Binding ReceiptImagePath}"
+                                           Aspect="AspectFill">
+                                        <Image.Triggers>
+                                            <DataTrigger TargetType="Image"
+                                                         Binding="{Binding ReceiptImagePath}"
+                                                         Value="{x:Null}">
+                                                <Setter Property="IsVisible" Value="False" />
+                                            </DataTrigger>
+
+                                            <DataTrigger TargetType="Image"
+                                                         Binding="{Binding ReceiptImagePath}"
+                                                         Value="">
+                                                <Setter Property="IsVisible" Value="False" />
+                                            </DataTrigger>
+                                        </Image.Triggers>
+                                    </Image>
+
+                                </Frame>
+
+                                <VerticalStackLayout Grid.Column="1"
+                                                     Spacing="2"
+                                                     VerticalOptions="Center">
+
+                                    <Label Text="{Binding SubCategory, TargetNullValue='ทั่วไป'}"
+                                           FontAttributes="Bold"
+                                           FontSize="16"
+                                           TextColor="#2C3E50" />
+
+                                    <Label Text="{Binding Note}"
+                                           FontSize="12"
+                                           TextColor="#7F8C8D"
+                                           LineBreakMode="TailTruncation"
+                                           MaxLines="1" />
+
+                                    <Label Text="ปัดซ้ายเพื่อลบ"
+                                           FontSize="12"
+                                           TextColor="#95A5A6" />
+
+                                    <Label Text="{Binding Date, StringFormat='{0:dd MMM yyyy HH:mm}'}"
+                                           FontSize="10"
+                                           TextColor="#BDC3C7" />
+
+                                </VerticalStackLayout>
+
+                                <Label Grid.Column="2"
+                                       Text="{Binding AmountDisplay}"
+                                       TextColor="{Binding AmountColor}"
+                                       FontAttributes="Bold"
+                                       FontSize="16"
+                                       VerticalOptions="Center"
+                                       HorizontalOptions="End" />
+
+                            </Grid>
+                        </Frame>
+                    </SwipeView>
+
                 </DataTemplate>
             </CollectionView.ItemTemplate>
 
             <CollectionView.EmptyView>
-                <VerticalStackLayout HorizontalOptions="Center" VerticalOptions="Center" Spacing="10" Margin="0,50,0,0">
-                    <Label Text="🧾" FontSize="40" HorizontalOptions="Center"/>
-                    <Label Text="ยังไม่มีประวัติการทำรายการ" TextColor="#95A5A6" FontSize="16"/>
+                <VerticalStackLayout HorizontalOptions="Center"
+                                     VerticalOptions="Center"
+                                     Spacing="10"
+                                     Margin="0,50,0,0">
+
+                    <Label Text="🧾"
+                           FontSize="40"
+                           HorizontalOptions="Center" />
+
+                    <Label Text="ยังไม่มีประวัติการทำรายการ"
+                           TextColor="#95A5A6"
+                           FontSize="16" />
+
                 </VerticalStackLayout>
             </CollectionView.EmptyView>
         </CollectionView>
