@@ -175,12 +175,28 @@ namespace SpendSmart.ViewModels
                     return;
                 }
 
+                // 1. หักเงินต้นทาง และเพิ่มเงินปลายทาง
                 _draggedPocket.CurrentBalance -= amount;
                 destinationPocket.CurrentBalance += amount;
 
                 await _databaseService.SavePocketAsync(_draggedPocket);
                 await _databaseService.SavePocketAsync(destinationPocket);
 
+                // 🌟 2. สร้าง Log ประวัติการโยกเงิน (ส่วนที่เพิ่มเข้ามาใหม่)
+                var transferLog = new TransactionRecord
+                {
+                    Type = "โยกเงิน",
+                    SubCategory = "🔄 Transfer",
+                    Amount = amount,
+                    Date = DateTime.Now,
+                    Note = $"โยกเงินจาก [{_draggedPocket.Name}] ➔ [{destinationPocket.Name}]"
+                };
+
+                // บันทึก Log ลง Database 
+                // (ถ้าใน DatabaseService ของคุณใช้ชื่อฟังก์ชันว่า AddTransactionAsync ให้เปลี่ยนชื่อตรงนี้ให้ตรงกันนะครับ)
+                await _databaseService.SaveTransactionAsync(transferLog);
+
+                // 3. รีเฟรชหน้าจอ
                 await LoadPocketsAsync();
 
                 WeakReferenceMessenger.Default.Send(new TransactionChangedMessage());

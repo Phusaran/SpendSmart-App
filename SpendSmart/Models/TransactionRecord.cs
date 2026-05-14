@@ -43,9 +43,15 @@ namespace SpendSmart.Models
             {
                 if (Type == "Income")
                     return Color.FromArgb("#27AE60");
-
+                if (Type == "โยกเงิน")
+                    return Color.FromArgb("#3498DB");
                 return Color.FromArgb("#E74C3C");
             }
         }
+        [Ignore]
+        public bool HasReceipt => !string.IsNullOrWhiteSpace(ReceiptImagePath);
+
+        [Ignore]
+        public bool NoReceipt => string.IsNullOrWhiteSpace(ReceiptImagePath);
     }
 }
