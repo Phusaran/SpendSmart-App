@@ -24,6 +24,8 @@ namespace SpendSmart.Models
 
         // Path ของรูปภาพสลิป/ใบเสร็จ
         public string ReceiptImagePath { get; set; }
+        
+        public int TargetPocketId { get; set; } 
 
         // Display amount with currency
         [Ignore]

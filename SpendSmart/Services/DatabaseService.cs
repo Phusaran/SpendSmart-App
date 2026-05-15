@@ -1,5 +1,8 @@
 ﻿using SQLite;
 using SpendSmart.Models;
+using System.Collections.Generic;
+using System.IO;
+using System.Threading.Tasks;
 
 namespace SpendSmart.Services
 {
@@ -30,10 +33,8 @@ namespace SpendSmart.Services
         public async Task<int> SavePocketAsync(Pocket pocket)
         {
             await Init();
-
             if (pocket.Id != 0)
                 return await _db.UpdateAsync(pocket);
-
             return await _db.InsertAsync(pocket);
         }
 
@@ -46,9 +47,7 @@ namespace SpendSmart.Services
         public async Task DeletePocketAndTransactionsAsync(Pocket pocket)
         {
             await Init();
-
-            if (pocket == null)
-                return;
+            if (pocket == null) return;
 
             var relatedTransactions = await _db.Table<TransactionRecord>()
                                                .Where(t => t.PocketId == pocket.Id)
@@ -65,7 +64,6 @@ namespace SpendSmart.Services
         public async Task<List<TransactionRecord>> GetTransactionsAsync()
         {
             await Init();
-
             return await _db.Table<TransactionRecord>()
                             .OrderByDescending(t => t.Date)
                             .ToListAsync();
@@ -74,10 +72,8 @@ namespace SpendSmart.Services
         public async Task<int> SaveTransactionAsync(TransactionRecord transaction)
         {
             await Init();
-
             if (transaction.Id != 0)
                 return await _db.UpdateAsync(transaction);
-
             return await _db.InsertAsync(transaction);
         }
 
@@ -90,25 +86,41 @@ namespace SpendSmart.Services
         public async Task DeleteTransactionAndUndoPocketAsync(TransactionRecord transaction)
         {
             await Init();
+            if (transaction == null) return;
 
-            if (transaction == null)
-                return;
-
-            var pocket = await _db.Table<Pocket>()
-                                  .Where(p => p.Id == transaction.PocketId)
-                                  .FirstOrDefaultAsync();
-
-            if (pocket != null)
+            // 🌟 กรณีที่ 1: ลบประวัติการ "โยกเงิน" (ต้องคืนเงินทั้งสองกระเป๋า)
+            if (transaction.Type == "โยกเงิน")
             {
-                if (transaction.Type == "Income")
-                    pocket.CurrentBalance -= transaction.Amount;
-                else
-                    pocket.CurrentBalance += transaction.Amount;
+                var sourcePocket = await _db.Table<Pocket>().Where(p => p.Id == transaction.PocketId).FirstOrDefaultAsync();
+                var targetPocket = await _db.Table<Pocket>().Where(p => p.Id == transaction.TargetPocketId).FirstOrDefaultAsync();
 
-                if (pocket.CurrentBalance < 0)
-                    pocket.CurrentBalance = 0;
+                if (sourcePocket != null && targetPocket != null)
+                {
+                    // Undo: ต้นทางได้เงินกลับมา / ปลายทางโดนหักเงินออก
+                    sourcePocket.CurrentBalance += transaction.Amount;
+                    targetPocket.CurrentBalance -= transaction.Amount;
 
-                await _db.UpdateAsync(pocket);
+                    if (targetPocket.CurrentBalance < 0) targetPocket.CurrentBalance = 0;
+
+                    await _db.UpdateAsync(sourcePocket);
+                    await _db.UpdateAsync(targetPocket);
+                }
+            }
+            // 🌟 กรณีที่ 2: ลบประวัติ Income / Expense ปกติ
+            else
+            {
+                var pocket = await _db.Table<Pocket>().Where(p => p.Id == transaction.PocketId).FirstOrDefaultAsync();
+                if (pocket != null)
+                {
+                    if (transaction.Type == "Income")
+                        pocket.CurrentBalance -= transaction.Amount;
+                    else
+                        pocket.CurrentBalance += transaction.Amount;
+
+                    if (pocket.CurrentBalance < 0) pocket.CurrentBalance = 0;
+
+                    await _db.UpdateAsync(pocket);
+                }
             }
 
             await _db.DeleteAsync(transaction);
@@ -123,25 +135,20 @@ namespace SpendSmart.Services
         public async Task<int> SaveGoalAsync(FinancialGoal goal)
         {
             await Init();
-
             if (goal.Id != 0)
                 return await _db.UpdateAsync(goal);
-
             return await _db.InsertAsync(goal);
         }
 
         public async Task<UserProfile> GetUserProfileAsync()
         {
             await Init();
-
             var profile = await _db.Table<UserProfile>().FirstOrDefaultAsync();
-
             if (profile == null)
             {
                 profile = new UserProfile { Id = 1, TotalExp = 0 };
                 await _db.InsertAsync(profile);
             }
-
             return profile;
         }
 

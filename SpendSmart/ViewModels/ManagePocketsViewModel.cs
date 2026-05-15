@@ -65,9 +65,7 @@ namespace SpendSmart.ViewModels
         public async Task LoadPocketsAsync()
         {
             var pockets = await _databaseService.GetPocketsAsync();
-
             Pockets.Clear();
-
             foreach (var p in pockets)
             {
                 Pockets.Add(p);
@@ -111,15 +109,20 @@ namespace SpendSmart.ViewModels
             SelectedPocketType = "Saving (เงินเก็บ)";
 
             WeakReferenceMessenger.Default.Send(new TransactionChangedMessage());
-
             await Shell.Current.DisplayAlert("สำเร็จ", "สร้าง Cloud Pocket เรียบร้อย", "ตกลง");
         }
 
         [RelayCommand]
         public async Task DeletePocketAsync(Pocket pocket)
         {
-            if (pocket == null)
+            if (pocket == null) return;
+
+            // 🌟 เงื่อนไข 1: ต้องเหลืออย่างน้อย 1 กระเป๋าเสมอ
+            if (Pockets.Count <= 1)
+            {
+                await Shell.Current.DisplayAlert("แจ้งเตือน", "ไม่สามารถลบได้ คุณต้องมีกระเป๋าเงินอย่างน้อย 1 ใบในระบบ", "ตกลง");
                 return;
+            }
 
             if (pocket.IsDefault)
             {
@@ -127,20 +130,22 @@ namespace SpendSmart.ViewModels
                 return;
             }
 
-            bool confirm = await Shell.Current.DisplayAlert(
-                "ยืนยันการลบ",
-                $"ต้องการลบกระเป๋า '{pocket.Name}' ใช่หรือไม่?\n\nรายการประวัติทั้งหมดของกระเป๋านี้จะถูกลบด้วย",
-                "ลบ",
-                "ยกเลิก");
+            // 🌟 เงื่อนไข 2: ถ้ามีเงินค้างอยู่ ให้เตือนเข้มงวดขึ้น
+            string warningMessage = $"ต้องการลบกระเป๋า '{pocket.Name}' ใช่หรือไม่?\n\nรายการประวัติทั้งหมดของกระเป๋านี้จะถูกลบด้วย";
 
-            if (!confirm)
-                return;
+            if (pocket.CurrentBalance > 0)
+            {
+                warningMessage = $"⚠️ เตือน: กระเป๋านี้ยังมีเงินค้างอยู่ {pocket.CurrentBalance:N2} ฿\n\nหากลบตอนนี้ เงินจำนวนนี้จะหายไปจากระบบทันที!\n(แนะนำให้โยกเงินไปกระเป๋าอื่นก่อนลบครับ)";
+            }
+
+            bool confirm = await Shell.Current.DisplayAlert("ยืนยันการลบ", warningMessage, "ลบอยู่ดี", "ยกเลิก");
+
+            if (!confirm) return;
 
             await _databaseService.DeletePocketAndTransactionsAsync(pocket);
             await LoadPocketsAsync();
 
             WeakReferenceMessenger.Default.Send(new TransactionChangedMessage());
-
             await Shell.Current.DisplayAlert("สำเร็จ", "ลบกระเป๋าเรียบร้อยแล้ว", "ตกลง");
         }
 
@@ -175,30 +180,26 @@ namespace SpendSmart.ViewModels
                     return;
                 }
 
-                // 1. หักเงินต้นทาง และเพิ่มเงินปลายทาง
                 _draggedPocket.CurrentBalance -= amount;
                 destinationPocket.CurrentBalance += amount;
 
                 await _databaseService.SavePocketAsync(_draggedPocket);
                 await _databaseService.SavePocketAsync(destinationPocket);
 
-                // 🌟 2. สร้าง Log ประวัติการโยกเงิน (ส่วนที่เพิ่มเข้ามาใหม่)
+                // 🌟 บันทึก Log พร้อมเก็บ ID ต้นทางและปลายทาง เพื่อใช้ Undo
                 var transferLog = new TransactionRecord
                 {
                     Type = "โยกเงิน",
                     SubCategory = "🔄 Transfer",
                     Amount = amount,
                     Date = DateTime.Now,
-                    Note = $"โยกเงินจาก [{_draggedPocket.Name}] ➔ [{destinationPocket.Name}]"
+                    Note = $"โยกเงินจาก [{_draggedPocket.Name}] ➔ [{destinationPocket.Name}]",
+                    PocketId = _draggedPocket.Id,      // ต้นทาง
+                    TargetPocketId = destinationPocket.Id // ปลายทาง
                 };
 
-                // บันทึก Log ลง Database 
-                // (ถ้าใน DatabaseService ของคุณใช้ชื่อฟังก์ชันว่า AddTransactionAsync ให้เปลี่ยนชื่อตรงนี้ให้ตรงกันนะครับ)
                 await _databaseService.SaveTransactionAsync(transferLog);
-
-                // 3. รีเฟรชหน้าจอ
                 await LoadPocketsAsync();
-
                 WeakReferenceMessenger.Default.Send(new TransactionChangedMessage());
             }
 
