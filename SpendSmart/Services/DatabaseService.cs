@@ -44,17 +44,24 @@ namespace SpendSmart.Services
             return await _db.DeleteAsync(pocket);
         }
 
+        // 🌟 ปรับปรุงใหม่: ลบกระเป๋าพร้อมลบประวัติที่เกี่ยวข้องทั้งหมด (ป้องกัน Log ผี)
         public async Task DeletePocketAndTransactionsAsync(Pocket pocket)
         {
             await Init();
             if (pocket == null) return;
 
+            // ค้นหาทุกรายการที่กระเป๋านี้เกี่ยวข้อง ไม่ว่าจะในฐานะ "ต้นทาง" หรือ "ปลายทาง"
             var relatedTransactions = await _db.Table<TransactionRecord>()
-                                               .Where(t => t.PocketId == pocket.Id)
+                                               .Where(t => t.PocketId == pocket.Id || t.TargetPocketId == pocket.Id)
                                                .ToListAsync();
 
             foreach (var transaction in relatedTransactions)
             {
+                // ลบรูปสลิปทิ้งด้วยถ้ามี เพื่อประหยัดพื้นที่เครื่อง
+                if (!string.IsNullOrEmpty(transaction.ReceiptImagePath) && File.Exists(transaction.ReceiptImagePath))
+                {
+                    try { File.Delete(transaction.ReceiptImagePath); } catch { /* ignore */ }
+                }
                 await _db.DeleteAsync(transaction);
             }
 
@@ -83,30 +90,34 @@ namespace SpendSmart.Services
             return await _db.DeleteAsync(transaction);
         }
 
+        // 🌟 ปรับปรุงใหม่: ระบบ Undo คืนเงินที่รองรับทั้งรายการทั่วไปและการโยกเงิน
         public async Task DeleteTransactionAndUndoPocketAsync(TransactionRecord transaction)
         {
             await Init();
             if (transaction == null) return;
 
-            // 🌟 กรณีที่ 1: ลบประวัติการ "โยกเงิน" (ต้องคืนเงินทั้งสองกระเป๋า)
+            // กรณีที่ 1: ลบประวัติการ "โยกเงิน" (คืนเงินให้ต้นทาง และหักเงินจากปลายทาง)
             if (transaction.Type == "โยกเงิน")
             {
                 var sourcePocket = await _db.Table<Pocket>().Where(p => p.Id == transaction.PocketId).FirstOrDefaultAsync();
                 var targetPocket = await _db.Table<Pocket>().Where(p => p.Id == transaction.TargetPocketId).FirstOrDefaultAsync();
 
-                if (sourcePocket != null && targetPocket != null)
+                // คืนเงินให้กระเป๋าต้นทาง
+                if (sourcePocket != null)
                 {
-                    // Undo: ต้นทางได้เงินกลับมา / ปลายทางโดนหักเงินออก
                     sourcePocket.CurrentBalance += transaction.Amount;
-                    targetPocket.CurrentBalance -= transaction.Amount;
-
-                    if (targetPocket.CurrentBalance < 0) targetPocket.CurrentBalance = 0;
-
                     await _db.UpdateAsync(sourcePocket);
+                }
+
+                // หักเงินออกจากกระเป๋าปลายทาง
+                if (targetPocket != null)
+                {
+                    targetPocket.CurrentBalance -= transaction.Amount;
+                    if (targetPocket.CurrentBalance < 0) targetPocket.CurrentBalance = 0;
                     await _db.UpdateAsync(targetPocket);
                 }
             }
-            // 🌟 กรณีที่ 2: ลบประวัติ Income / Expense ปกติ
+            // กรณีที่ 2: ลบประวัติ Income / Expense ปกติ
             else
             {
                 var pocket = await _db.Table<Pocket>().Where(p => p.Id == transaction.PocketId).FirstOrDefaultAsync();
@@ -118,9 +129,14 @@ namespace SpendSmart.Services
                         pocket.CurrentBalance += transaction.Amount;
 
                     if (pocket.CurrentBalance < 0) pocket.CurrentBalance = 0;
-
                     await _db.UpdateAsync(pocket);
                 }
+            }
+
+            // ลบรูปภาพก่อนลบข้อมูลจาก DB
+            if (!string.IsNullOrEmpty(transaction.ReceiptImagePath) && File.Exists(transaction.ReceiptImagePath))
+            {
+                try { File.Delete(transaction.ReceiptImagePath); } catch { /* ignore */ }
             }
 
             await _db.DeleteAsync(transaction);

@@ -65,7 +65,9 @@ namespace SpendSmart.ViewModels
         public async Task LoadPocketsAsync()
         {
             var pockets = await _databaseService.GetPocketsAsync();
+
             Pockets.Clear();
+
             foreach (var p in pockets)
             {
                 Pockets.Add(p);
@@ -109,6 +111,7 @@ namespace SpendSmart.ViewModels
             SelectedPocketType = "Saving (เงินเก็บ)";
 
             WeakReferenceMessenger.Default.Send(new TransactionChangedMessage());
+
             await Shell.Current.DisplayAlert("สำเร็จ", "สร้าง Cloud Pocket เรียบร้อย", "ตกลง");
         }
 
@@ -117,28 +120,36 @@ namespace SpendSmart.ViewModels
         {
             if (pocket == null) return;
 
-            // 🌟 เงื่อนไข 1: ต้องเหลืออย่างน้อย 1 กระเป๋าเสมอ
+            // 🌟 1. ตรวจสอบ: ต้องเหลืออย่างน้อย 1 กระเป๋าเสมอ
             if (Pockets.Count <= 1)
             {
                 await Shell.Current.DisplayAlert("แจ้งเตือน", "ไม่สามารถลบได้ คุณต้องมีกระเป๋าเงินอย่างน้อย 1 ใบในระบบ", "ตกลง");
                 return;
             }
 
+            // 🌟 2. ตรวจสอบ: ห้ามลบกระเป๋าหลัก (ถ้ามีระบบ IsDefault)
             if (pocket.IsDefault)
             {
                 await Shell.Current.DisplayAlert("แจ้งเตือน", "ไม่สามารถลบกระเป๋าหลักได้", "ตกลง");
                 return;
             }
 
-            // 🌟 เงื่อนไข 2: ถ้ามีเงินค้างอยู่ ให้เตือนเข้มงวดขึ้น
-            string warningMessage = $"ต้องการลบกระเป๋า '{pocket.Name}' ใช่หรือไม่?\n\nรายการประวัติทั้งหมดของกระเป๋านี้จะถูกลบด้วย";
-
-            if (pocket.CurrentBalance > 0)
+            // 🌟 3. ตรวจสอบ (Hard Block): ถ้าเงินไม่เป็น 0 ห้ามลบเด็ดขาด
+            if (pocket.CurrentBalance != 0)
             {
-                warningMessage = $"⚠️ เตือน: กระเป๋านี้ยังมีเงินค้างอยู่ {pocket.CurrentBalance:N2} ฿\n\nหากลบตอนนี้ เงินจำนวนนี้จะหายไปจากระบบทันที!\n(แนะนำให้โยกเงินไปกระเป๋าอื่นก่อนลบครับ)";
+                await Shell.Current.DisplayAlert(
+                    "ไม่สามารถลบได้",
+                    $"กระเป๋านี้ยังมีเงินค้างอยู่ {pocket.CurrentBalance:N2} ฿\n\nกรุณาโยกเงินออกจากกระเป๋านี้ให้หมดจนเหลือ 0 ฿ ก่อนทำการลบครับ",
+                    "ตกลง");
+                return; // ตัดจบการทำงานทันที
             }
 
-            bool confirm = await Shell.Current.DisplayAlert("ยืนยันการลบ", warningMessage, "ลบอยู่ดี", "ยกเลิก");
+            // 4. ยืนยันการลบ (กรณีเงินเป็น 0 แล้ว)
+            bool confirm = await Shell.Current.DisplayAlert(
+                "ยืนยันการลบ",
+                $"ต้องการลบกระเป๋า '{pocket.Name}' ใช่หรือไม่?\n(ประวัติรายการทั้งหมดของกระเป๋านี้จะถูกลบออกด้วย)",
+                "ลบ",
+                "ยกเลิก");
 
             if (!confirm) return;
 
@@ -146,6 +157,7 @@ namespace SpendSmart.ViewModels
             await LoadPocketsAsync();
 
             WeakReferenceMessenger.Default.Send(new TransactionChangedMessage());
+
             await Shell.Current.DisplayAlert("สำเร็จ", "ลบกระเป๋าเรียบร้อยแล้ว", "ตกลง");
         }
 
@@ -186,7 +198,7 @@ namespace SpendSmart.ViewModels
                 await _databaseService.SavePocketAsync(_draggedPocket);
                 await _databaseService.SavePocketAsync(destinationPocket);
 
-                // 🌟 บันทึก Log พร้อมเก็บ ID ต้นทางและปลายทาง เพื่อใช้ Undo
+                // 🌟 บันทึก Log พร้อมเก็บ ID ต้นทางและปลายทาง เพื่อใช้ Undo ในหน้า History
                 var transferLog = new TransactionRecord
                 {
                     Type = "โยกเงิน",
@@ -199,7 +211,9 @@ namespace SpendSmart.ViewModels
                 };
 
                 await _databaseService.SaveTransactionAsync(transferLog);
+
                 await LoadPocketsAsync();
+
                 WeakReferenceMessenger.Default.Send(new TransactionChangedMessage());
             }
 
