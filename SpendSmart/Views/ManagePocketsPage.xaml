@@ -3,7 +3,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:viewmodels="clr-namespace:SpendSmart.ViewModels"
              x:Class="SpendSmart.Views.ManagePocketsPage"
-             x:Name="RootPage" Title="จัดการกระเป๋าเงิน (Pockets)">
+             x:Name="RootPage" Title="จัดการกระเป๋าเงิน">
 
     <ContentPage.Background>
         <LinearGradientBrush EndPoint="0,1">
@@ -17,7 +17,7 @@
 
             <Frame BackgroundColor="#CCFFFFFF" CornerRadius="30" Padding="25" BorderColor="White" HasShadow="True">
                 <VerticalStackLayout Spacing="15">
-                    <Label Text="Create New Cloud" TextColor="#2C3E50" FontAttributes="Bold" FontSize="20" HorizontalOptions="Center"/>
+                    <Label Text="เพื่มกระเป๋าเงินใบใหม่" TextColor="#2C3E50" FontAttributes="Bold" FontSize="20" HorizontalOptions="Center"/>
 
                     <Picker Title="ประเภทกระเป๋า" ItemsSource="{Binding PocketTypes}" SelectedItem="{Binding SelectedPocketType}" 
                             BackgroundColor="#F8F9FA" TextColor="#2C3E50" HeightRequest="50"/>
@@ -40,13 +40,13 @@
                         </HorizontalStackLayout>
                     </VerticalStackLayout>
 
-                    <Button Text="Create Cloud Pocket" Command="{Binding AddCloudPocketCommand}" 
+                    <Button Text="เพื่มกระเป๋า" Command="{Binding AddCloudPocketCommand}" 
                             BackgroundColor="#D4AF37" TextColor="White" 
                             FontAttributes="Bold" CornerRadius="25" HeightRequest="50" Margin="0,10,0,0"/>
                 </VerticalStackLayout>
             </Frame>
 
-            <Label Text="กระเป๋าเงินของคุณ" TextColor="#2C3E50" FontAttributes="Bold" FontSize="18" Margin="0,10,0,0" />
+            <Label Text="จัดการกระเป๋าเงินของคุณ" TextColor="#2C3E50" FontAttributes="Bold" FontSize="18" Margin="0,10,0,0" />
 
             <CollectionView ItemsSource="{Binding Pockets}">
                 <CollectionView.ItemTemplate>

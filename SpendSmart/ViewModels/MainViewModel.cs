@@ -10,11 +10,9 @@ namespace SpendSmart.ViewModels
     {
         private readonly DatabaseService _databaseService;
 
-        // ตัวแปรเก็บยอดเงินรวม (ใช้ [ObservableProperty] เพื่อให้ UI อัปเดตอัตโนมัติเมื่อค่าเปลี่ยน)
         [ObservableProperty]
         private decimal _totalBalance;
 
-        // ลิสต์เก็บกระเป๋าเงินและรายการล่าสุด
         public ObservableCollection<Pocket> Pockets { get; set; } = new();
         public ObservableCollection<TransactionRecord> RecentTransactions { get; set; } = new();
 
@@ -26,9 +24,9 @@ namespace SpendSmart.ViewModels
         [RelayCommand]
         public async Task LoadDataAsync()
         {
-            // 1. โหลดข้อมูลกระเป๋าเงินและคำนวณยอดรวม
             var pockets = await _databaseService.GetPocketsAsync();
             Pockets.Clear();
+
             decimal total = 0;
 
             foreach (var pocket in pockets)
@@ -36,9 +34,9 @@ namespace SpendSmart.ViewModels
                 Pockets.Add(pocket);
                 total += pocket.CurrentBalance;
             }
+
             TotalBalance = total;
 
-            // 2. โหลดรายการเคลื่อนไหวล่าสุด (สมมติเอามาแค่ 5 รายการแรก)
             var transactions = await _databaseService.GetTransactionsAsync();
             RecentTransactions.Clear();
 
@@ -47,10 +45,31 @@ namespace SpendSmart.ViewModels
                 RecentTransactions.Add(transaction);
             }
         }
+
         [RelayCommand]
         public async Task GoToAddTransactionAsync()
         {
-            // เปลี่ยนมาเรียกใช้ชื่อ Route ที่ลงทะเบียนไว้แบบตรงๆ
+            var pockets = await _databaseService.GetPocketsAsync();
+
+            if (pockets.Count == 0)
+            {
+                bool goCreatePocket = await Shell.Current.DisplayAlert(
+                    "ยินดีต้อนรับสู่ SpendSmart",
+                    "มาเริ่มต้นปั้นความฝันของคุณให้เป็นจริงกัน\n" +
+"โดยแยกเงินออมตามใจชอบเหมือนมีกระปุกหลายใบ\n\n" +
+"เริ่มสร้างกระเป๋าใบแรกของคุณเลย\n" +
+"(เช่น ออมซื้อมือถือ/กระเป๋าจ่ายค่าอาหาร)",
+                    "ไปสร้างกระเป๋า",
+                    "ยกเลิก");
+
+                if (goCreatePocket)
+                {
+                    await Shell.Current.GoToAsync("ManagePocketsPage");
+                }
+
+                return;
+            }
+
             await Shell.Current.GoToAsync("AddTransactionPage");
         }
     }

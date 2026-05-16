@@ -10,6 +10,7 @@
     Shell.TabBarUnselectedColor="#A0A0A0">
 
     <TabBar>
+
         <Tab Title="ภาพรวม">
             <Tab.Icon>
                 <FontImageSource Glyph="💰" Size="24" Color="#D4AF37" />
@@ -17,26 +18,29 @@
             <ShellContent ContentTemplate="{DataTemplate views:MainPage}" />
         </Tab>
 
+        <Tab Title="กระเป๋าเงิน">
+            <Tab.Icon>
+                <FontImageSource Glyph="💼" Size="24" Color="#D4AF37" />
+            </Tab.Icon>
+            <ShellContent ContentTemplate="{DataTemplate views:ManagePocketsPage}" />
+        </Tab>
+
         <Tab Title="ประวัติ">
             <Tab.Icon>
-                <FontImageSource Glyph="💰" Size="24" Color="#D4AF37" />
+                <FontImageSource Glyph="📜" Size="24" Color="#D4AF37" />
             </Tab.Icon>
             <ShellContent ContentTemplate="{DataTemplate views:HistoryPage}" />
         </Tab>
 
-        <Tab Title="วิเคราะห์">
+        <Tab x:Name="AnalysisTab" Title="วิเคราะห์">
             <Tab.Icon>
-                <FontImageSource Glyph="💰" Size="24" Color="#D4AF37" />
+                <FontImageSource x:Name="AnalysisIcon" Glyph="📊" Size="24" Color="#D4AF37" />
             </Tab.Icon>
-            <ShellContent ContentTemplate="{DataTemplate views:DashboardPage}" Route="DashboardPage" />
+            <ShellContent
+                ContentTemplate="{DataTemplate views:DashboardPage}"
+                Route="DashboardPage" />
         </Tab>
 
-        <Tab Title="กระเป๋าเงิน">
-            <Tab.Icon>
-                <FontImageSource Glyph="💰" Size="24" Color="#D4AF37" />
-            </Tab.Icon>
-            <ShellContent ContentTemplate="{DataTemplate views:ManagePocketsPage}" />
-        </Tab>
     </TabBar>
 
 </Shell>

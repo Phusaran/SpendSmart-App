@@ -112,7 +112,7 @@ namespace SpendSmart.ViewModels
 
             WeakReferenceMessenger.Default.Send(new TransactionChangedMessage());
 
-            await Shell.Current.DisplayAlert("สำเร็จ", "สร้าง Cloud Pocket เรียบร้อย", "ตกลง");
+            await Shell.Current.DisplayAlert("สำเร็จ", "สร้างกระเป๋าเรียบร้อย", "ตกลง");
         }
 
         [RelayCommand]

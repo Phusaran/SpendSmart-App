@@ -3,24 +3,52 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:viewmodels="clr-namespace:SpendSmart.ViewModels"
              x:Class="SpendSmart.Views.BackupPage"
-             Title="Backup &amp; Restore">
+             Title="สำรองและกู้คืนข้อมูล">
 
-    <VerticalStackLayout Padding="30" Spacing="25" VerticalOptions="Center">
+    <ContentPage.Background>
+        <LinearGradientBrush EndPoint="0,1">
+            <GradientStop Color="#FDFBFB" Offset="0.1" />
+            <GradientStop Color="#EBEDEE" Offset="1.0" />
+        </LinearGradientBrush>
+    </ContentPage.Background>
 
-        <Image Source="dotnet_bot.png" HeightRequest="150" HorizontalOptions="Center" />
+    <VerticalStackLayout Padding="30"
+                         Spacing="25"
+                         VerticalOptions="Center"
+                         BackgroundColor="Transparent">
 
-        <Label Text="จัดการฐานข้อมูล" FontSize="24" FontAttributes="Bold" HorizontalOptions="Center" />
-        <Label Text="{Binding StatusMessage}" HorizontalOptions="Center" TextColor="Gray" />
+        <Label Text="💰"
+               FontSize="140"
+               HorizontalOptions="Center"
+               Margin="0,0,0,10" />
 
-        <ActivityIndicator IsRunning="{Binding IsBusy}" HorizontalOptions="Center" />
+        <Label Text="จัดการฐานข้อมูล"
+               FontSize="24"
+               FontAttributes="Bold"
+               HorizontalOptions="Center" />
 
-        <Button Text="☁️ สำรองข้อมูล (Backup)" 
+        <Label Text="{Binding StatusMessage}"
+               HorizontalOptions="Center"
+               TextColor="Gray" />
+
+        <ActivityIndicator IsRunning="{Binding IsBusy}"
+                           HorizontalOptions="Center" />
+
+        <Button Text="☁️ สำรองข้อมูล (Backup)"
                 Command="{Binding BackupDataCommand}"
-                HeightRequest="60" CornerRadius="30" BackgroundColor="#3498DB" />
+                HeightRequest="60"
+                CornerRadius="30"
+                BackgroundColor="#D4AF37"
+                TextColor="White"
+                FontAttributes="Bold" />
 
-        <Button Text="🔄 กู้คืนข้อมูล (Restore)" 
+        <Button Text="🔄 กู้คืนข้อมูล (Restore)"
                 Command="{Binding RestoreDataCommand}"
-                HeightRequest="60" CornerRadius="30" BackgroundColor="#E67E22" />
+                HeightRequest="60"
+                CornerRadius="30"
+                BackgroundColor="#2C3E50"
+                TextColor="White"
+                FontAttributes="Bold" />
 
     </VerticalStackLayout>
 </ContentPage>

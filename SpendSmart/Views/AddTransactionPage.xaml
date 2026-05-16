@@ -58,7 +58,7 @@
                            TextColor="#D4AF37" BackgroundColor="#F8F9FA" Placeholder="จำนวนเงิน (฿)" FontAttributes="Bold" FontSize="18"/>
 
                     <Picker ItemsSource="{Binding Pockets}" SelectedItem="{Binding SelectedPocket}" ItemDisplayBinding="{Binding Name}"
-                            TextColor="#2C3E50" BackgroundColor="#F8F9FA" Title="เลือกกระเป๋าเงิน (Cloud Pocket)"/>
+                            TextColor="#2C3E50" BackgroundColor="#F8F9FA" Title="เลือกกระเป๋าเงิน (Pocket)"/>
 
                     <Entry Text="{Binding SubCategory}" TextColor="#2C3E50" BackgroundColor="#F8F9FA" Placeholder="หมวดหมู่ (เช่น อาหาร, ช้อปปิ้ง)"/>
 

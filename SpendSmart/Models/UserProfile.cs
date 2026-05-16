@@ -5,12 +5,36 @@ namespace SpendSmart.Models
     public class UserProfile
     {
         [PrimaryKey]
-        public int Id { get; set; } = 1; // มีแค่ Record เดียวเสมอ
-        public int TotalExp { get; set; }
-        public int CurrentLevel => (TotalExp / 100) + 1; // ทุกๆ 100 EXP = 1 เลเวล
+        public int Id { get; set; } = 1;
 
-        // คำนวณหลอด EXP ปัจจุบัน (เศษที่ยังไม่เต็มร้อย)
-        public double LevelProgress => (TotalExp % 100) / 100.0;
-        public string ExpText => $"{TotalExp % 100} / 100 EXP";
+        public int TotalExp { get; set; }
+
+        public int CurrentLevel => Math.Max(1, TotalExp / 10);
+
+        public int DisplayExp => Math.Min(TotalExp, 50);
+
+        public int ExpCap
+        {
+            get
+            {
+                if (TotalExp < 30)
+                    return 30;
+
+                return 50;
+            }
+        }
+
+        public double LevelProgress
+        {
+            get
+            {
+                if (ExpCap <= 0)
+                    return 0;
+
+                return Math.Min(1.0, (double)DisplayExp / ExpCap);
+            }
+        }
+
+        public string ExpText => $"{DisplayExp} / {ExpCap} EXP";
     }
 }

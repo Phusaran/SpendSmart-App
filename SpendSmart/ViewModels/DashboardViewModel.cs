@@ -8,6 +8,7 @@ using System;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.Maui.Storage;
 
 namespace SpendSmart.ViewModels
 {
@@ -24,6 +25,13 @@ namespace SpendSmart.ViewModels
         [ObservableProperty] private string _expText;
         [ObservableProperty] private string _rankName;
         [ObservableProperty] private string _rankColor;
+
+        [ObservableProperty] private bool _hasPendingAiReward;
+        [ObservableProperty] private bool _hasPendingMonthlyReward;
+        [ObservableProperty] private bool _canUseAiChat;
+        [ObservableProperty] private bool _canUseMonthlyAnalysis;
+        [ObservableProperty] private bool _isAiChatLocked;
+        [ObservableProperty] private bool _isMonthlyAnalysisLocked;
 
         public ObservableCollection<CategorySummary> CategoryData { get; set; } = new();
 
@@ -70,66 +78,101 @@ namespace SpendSmart.ViewModels
 
             var profile = await _databaseService.GetUserProfileAsync();
 
+            Preferences.Set("TotalExpMirror", profile.TotalExp);
+
             UserLevel = profile.CurrentLevel;
             ExpProgress = profile.LevelProgress;
             ExpText = profile.ExpText;
 
-            if (UserLevel < 5)
+            if (profile.TotalExp < 30)
             {
                 RankName = "Iron";
                 RankColor = "#7F8C8D";
             }
-            else if (UserLevel < 10)
+            else if (profile.TotalExp < 50)
             {
                 RankName = "Bronze";
                 RankColor = "#CD7F32";
             }
-            else if (UserLevel < 20)
+            else
             {
                 RankName = "Silver";
                 RankColor = "#BDC3C7";
             }
-            else if (UserLevel < 30)
+
+            bool hasClaimedAiUnlock = Preferences.Get("HasClaimedAiUnlock", false);
+            bool hasClaimedMonthlyUnlock = Preferences.Get("HasClaimedMonthlyAnalysisUnlock", false);
+
+            HasPendingAiReward = profile.TotalExp >= 30 && !hasClaimedAiUnlock;
+            HasPendingMonthlyReward = profile.TotalExp >= 50 && !hasClaimedMonthlyUnlock;
+
+            CanUseAiChat = profile.TotalExp >= 30 && hasClaimedAiUnlock;
+            CanUseMonthlyAnalysis = profile.TotalExp >= 50 && hasClaimedMonthlyUnlock;
+
+            IsAiChatLocked = !CanUseAiChat;
+            IsMonthlyAnalysisLocked = !CanUseMonthlyAnalysis;
+
+            if (Shell.Current is AppShell appShell)
             {
-                RankName = "Gold";
-                RankColor = "#F1C40F";
+                appShell.RefreshAnalysisRewardState();
             }
-            else if (UserLevel < 40)
-            {
-                RankName = "Platinum";
-                RankColor = "#1ABC9C";
-            }
-            else if (UserLevel < 50)
-            {
-                RankName = "Diamond";
-                RankColor = "#9B59B6";
-            }
-            else if (UserLevel < 70)
-            {
-                RankName = "Ascendant";
-                RankColor = "#2ECC71";
-            }
-            else if (UserLevel < 100)
-            {
-                RankName = "Immortal";
-                RankColor = "#E74C3C";
-            }
-            else
-            {
-                RankName = "Radiant";
-                RankColor = "#F39C12";
-            }
+        }
+
+        [RelayCommand]
+        public async Task ClaimAiRewardAsync()
+        {
+            Preferences.Set("HasClaimedAiUnlock", true);
+
+            await Shell.Current.DisplayAlert(
+                "รับรางวัลสำเร็จ",
+                "🎁 ปลดล็อก เริ่มต้นการสนทนา AI แล้ว",
+                "ตกลง");
+
+            await LoadDashboardDataAsync();
+        }
+
+        [RelayCommand]
+        public async Task ClaimMonthlyRewardAsync()
+        {
+            Preferences.Set("HasClaimedMonthlyAnalysisUnlock", true);
+
+            await Shell.Current.DisplayAlert(
+                "รับรางวัลสำเร็จ",
+                "🎁 ปลดล็อก วิเคราะห์ข้อมูลรายเดือน แล้ว",
+                "ตกลง");
+
+            await LoadDashboardDataAsync();
         }
 
         [RelayCommand]
         public async Task GoToChatAsync()
         {
+            if (!CanUseAiChat)
+            {
+                await Shell.Current.DisplayAlert(
+                    "ยังไม่ปลดล็อก",
+                    "ต้องมี 30 EXP ก่อน แล้วกดรับรางวัล 🎁 ที่หน้า วิเคราะห์",
+                    "ตกลง");
+
+                return;
+            }
+
             await Shell.Current.GoToAsync("ChatPage");
         }
 
         [RelayCommand]
         public async Task AskAiForAdviceAsync()
         {
+            if (!CanUseMonthlyAnalysis)
+            {
+                await Shell.Current.DisplayAlert(
+                    "ยังไม่ปลดล็อก",
+                    "ต้องมี 50 EXP ก่อน แล้วกดรับรางวัล 🎁 ที่หน้า วิเคราะห์",
+                    "ตกลง");
+
+                return;
+            }
+
             if (CategoryData.Count == 0)
             {
                 await App.Current.MainPage.DisplayAlert("แจ้งเตือน", "ยังไม่มีข้อมูลรายจ่ายให้วิเคราะห์ครับ", "ตกลง");
@@ -143,10 +186,10 @@ namespace SpendSmart.ViewModels
 
             IsAiThinking = false;
         }
+
         [RelayCommand]
         public async Task GoToBackupAsync()
         {
-            // สั่งให้แอปเปลี่ยนหน้าไปยัง BackupPage
             await Shell.Current.GoToAsync(nameof(SpendSmart.Views.BackupPage));
         }
     }

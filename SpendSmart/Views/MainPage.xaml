@@ -21,7 +21,7 @@
                        TextColor="#2C3E50" FontSize="44" FontAttributes="Bold" HorizontalOptions="Center" />
             </VerticalStackLayout>
 
-            <Label Text="Cloud Pockets" TextColor="#2C3E50" FontSize="20" FontAttributes="Bold" />
+            <Label Text="กระเป๋าเงินของฉัน" TextColor="#2C3E50" FontSize="20" FontAttributes="Bold" />
 
             <CollectionView ItemsSource="{Binding Pockets}">
                 <CollectionView.ItemTemplate>

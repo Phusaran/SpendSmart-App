@@ -33,14 +33,11 @@ namespace SpendSmart.ViewModels
         [ObservableProperty] private bool _isRecording;
         [ObservableProperty] private string _voiceButtonText = "🎙️ กดเพื่อพูดจดรายจ่าย";
         [ObservableProperty] private Color _voiceButtonColor = Color.FromArgb("#3498DB");
-
-        // 👉 ตัวแปรสำหรับควบคุม UI ตอน AI กำลังทำงาน
         [ObservableProperty] private bool _isScanning;
 
         public ObservableCollection<Pocket> Pockets { get; set; } = new();
         public List<string> TransactionTypes { get; } = new List<string> { "Expense", "Income" };
 
-        // 🌟 แก้ไขที่ 1: เพิ่มตัวแปรเข้ามารับในวงเล็บให้ครบทั้ง 4 ตัว
         public AddTransactionViewModel(
             DatabaseService databaseService,
             AIReceiptScannerService aiScanner,
@@ -56,15 +53,22 @@ namespace SpendSmart.ViewModels
         public async Task LoadPocketsAsync()
         {
             var pockets = await _databaseService.GetPocketsAsync();
+
             Pockets.Clear();
+
             foreach (var p in pockets)
             {
                 Pockets.Add(p);
-                // ดึง Main Cloud มาเป็นค่าเริ่มต้น
+
                 if (p.IsDefault || p.Name.ToLower().Contains("main"))
                 {
                     SelectedPocket = p;
                 }
+            }
+
+            if (SelectedPocket == null && Pockets.Count > 0)
+            {
+                SelectedPocket = Pockets[0];
             }
         }
 
@@ -72,9 +76,11 @@ namespace SpendSmart.ViewModels
         public async Task ToggleVoiceRecordAsync()
         {
             var status = await Permissions.CheckStatusAsync<Permissions.Microphone>();
+
             if (status != PermissionStatus.Granted)
             {
                 status = await Permissions.RequestAsync<Permissions.Microphone>();
+
                 if (status != PermissionStatus.Granted)
                 {
                     await Shell.Current.DisplayAlert("แจ้งเตือน", "กรุณาอนุญาตให้แอปใช้ไมโครโฟนก่อนครับ", "ตกลง");
@@ -84,7 +90,6 @@ namespace SpendSmart.ViewModels
 
             if (!IsRecording)
             {
-                // เริ่มอัดเสียง
                 _audioRecorder = _audioManager.CreateRecorder();
                 await _audioRecorder.StartAsync();
 
@@ -94,24 +99,23 @@ namespace SpendSmart.ViewModels
             }
             else
             {
-                // หยุดอัดเสียง
                 var recordedAudio = await _audioRecorder.StopAsync();
+
                 IsRecording = false;
                 VoiceButtonText = "🎙️ กดเพื่อพูดจดรายจ่าย";
                 VoiceButtonColor = Color.FromArgb("#3498DB");
 
                 IsScanning = true;
 
-                // 🌟 แก้ไขที่ 2: เอา await และ Async ออกไป ใช้ GetAudioStream() ธรรมดา
                 var audioStream = recordedAudio.GetAudioStream();
 
                 var filePath = Path.Combine(FileSystem.CacheDirectory, "voice_expense.wav");
+
                 using (var fileStream = File.Create(filePath))
                 {
                     await audioStream.CopyToAsync(fileStream);
                 }
 
-                // 🌟 3. ส่งให้ Service ตัวใหม่ทำงานแทน
                 var result = await _voiceScanner.AnalyzeVoiceAsync(filePath);
 
                 if (result != null)
@@ -120,7 +124,11 @@ namespace SpendSmart.ViewModels
                     SelectedType = result.Type;
                     SubCategory = result.SubCategory;
                     Note = result.Note;
-                    await Shell.Current.DisplayAlert("AI ทำงานสำเร็จ", $"จับใจความได้ว่า:\nหมวด: {SubCategory}\nยอด: ฿{Amount}\nบันทึก: {Note}", "เยี่ยม");
+
+                    await Shell.Current.DisplayAlert(
+                        "AI ทำงานสำเร็จ",
+                        $"จับใจความได้ว่า:\nหมวด: {SubCategory}\nยอด: ฿{Amount}\nบันทึก: {Note}",
+                        "เยี่ยม");
                 }
                 else
                 {
@@ -137,24 +145,22 @@ namespace SpendSmart.ViewModels
             try
             {
                 var photo = await MediaPicker.Default.PickPhotoAsync();
+
                 if (photo != null)
                 {
-                    // 🌟 1. เปิดสวิตช์โชว์ตัวโหลดทันที! ผู้ใช้จะได้รู้ว่าแอปเริ่มทำงานแล้ว
                     IsScanning = true;
 
-                    // 🌟 2. สร้างชื่อไฟล์แบบ "สุ่ม" ป้องกันปัญหาไฟล์ซ้ำและโดนบล็อก
                     string uniqueFileName = $"{Guid.NewGuid()}_{photo.FileName}";
                     string localFilePath = Path.Combine(FileSystem.AppDataDirectory, uniqueFileName);
 
-                    // 🌟 3. ใช้ File.Create เพื่อสร้างไฟล์ใหม่ให้ชัวร์ และจัดการสตรีมให้ปลอดภัย
                     using Stream sourceStream = await photo.OpenReadAsync();
                     using FileStream localFileStream = File.Create(localFilePath);
+
                     await sourceStream.CopyToAsync(localFileStream);
-                    localFileStream.Close(); // บังคับปิดไฟล์ให้สนิทก่อนส่งต่อให้ AI
+                    localFileStream.Close();
 
                     ReceiptImagePath = localFilePath;
 
-                    // ส่งรูปไปให้ AI ประมวลผล
                     var result = await _aiScanner.ScanReceiptAsync(ReceiptImagePath);
 
                     Amount = result.Amount;
@@ -162,13 +168,13 @@ namespace SpendSmart.ViewModels
                     Note = result.SuggestedNote;
 
                     IsScanning = false;
+
                     await Shell.Current.DisplayAlert("AI Scanner", result.SuggestedNote, "เยี่ยมเลย");
                 }
             }
             catch (Exception ex)
             {
                 IsScanning = false;
-                // โชว์ Error ออกมาตรงๆ เลยว่าเกิดจากอะไร จะได้แก้ถูกจุดครับ
                 await Shell.Current.DisplayAlert("ข้อผิดพลาด", $"สแกนไม่สำเร็จ: {ex.Message}", "ตกลง");
             }
         }
@@ -193,34 +199,44 @@ namespace SpendSmart.ViewModels
                 ReceiptImagePath = ReceiptImagePath
             };
 
-            if (SelectedType == "Expense") SelectedPocket.CurrentBalance -= Amount;
-            else SelectedPocket.CurrentBalance += Amount;
+            if (SelectedType == "Expense")
+                SelectedPocket.CurrentBalance -= Amount;
+            else
+                SelectedPocket.CurrentBalance += Amount;
 
             await _databaseService.SavePocketAsync(SelectedPocket);
             await _databaseService.SaveTransactionAsync(transaction);
 
-            // 🌟 ----------------------------------------------------
-            // 🌟 ระบบคำนวณ EXP
-            // ----------------------------------------------------
-            int gainedExp = 5; // จดบัญชีทั่วไปได้ 5 EXP
-
-            if (SelectedType == "Income") gainedExp += 10; // มีรายรับได้เพิ่ม 10
-
-            // ถ้าโอนเงินเข้ากระเป๋า "เงินเก็บ" รับโบนัสชุดใหญ่!
-            if (SelectedType == "Income" && SelectedPocket.PocketType == "Saving")
-                gainedExp += 35;
+            int gainedExp = 10;
 
             var profile = await _databaseService.GetUserProfileAsync();
-            int oldLevel = profile.CurrentLevel;
+            int oldExp = profile.TotalExp;
+
             profile.TotalExp += gainedExp;
+
             await _databaseService.SaveUserProfileAsync(profile);
 
-            string alertMsg = $"บันทึกรายการเรียบร้อย\n✨ ได้รับ +{gainedExp} EXP!";
-            if (profile.CurrentLevel > oldLevel)
+            Preferences.Set("TotalExpMirror", profile.TotalExp);
+
+            bool unlockedAiNow = oldExp < 30 && profile.TotalExp >= 30;
+            bool unlockedMonthlyNow = oldExp < 50 && profile.TotalExp >= 50;
+
+            if (Shell.Current is AppShell appShell)
             {
-                alertMsg += $"\n🎉 เลเวลอัปเป็นระดับ {profile.CurrentLevel} แล้ว!";
+                appShell.RefreshAnalysisRewardState();
             }
-            // 🌟 ----------------------------------------------------
+
+            string alertMsg = $"บันทึกรายการเรียบร้อย\n✨ ได้รับ +{gainedExp} EXP!";
+
+            if (unlockedAiNow)
+            {
+                alertMsg += "\n🎁 มีรางวัลใหม่ที่หน้า วิเคราะห์";
+            }
+
+            if (unlockedMonthlyNow)
+            {
+                alertMsg += "\n🎁 ปลดล็อกของรางวัลใหม่ที่หน้า วิเคราะห์";
+            }
 
             await Shell.Current.DisplayAlert("สำเร็จ", alertMsg, "ตกลง");
             await Shell.Current.GoToAsync("..");
