@@ -1,22 +1,56 @@
-﻿using SpendSmart.ViewModels;
+﻿/*
+=========================================================================================
+[สรุปภาพรวมการทำงานของคลาส MainPage]
+ไฟล์นี้คือ "โค้ดเบื้องหลังหน้าจอ UI (Code-Behind)" สำหรับหน้าแรกหรือหน้าจอหลักของแอปพลิเคชัน (Main Screen)
+ทำหน้าที่ประสานงานระหว่างหน้าตาดีไซน์ XAML (MainPage.xaml) เข้ากับสมองกลควบคุมข้อมูล MainViewModel 
+โดยมีหน้าที่หลัก 3 อย่างตามสถาปัตยกรรม MVVM คือ:
 
-namespace SpendSmart.Views 
+1. รับระบบคำนวณหน้าแรกเข้ามาทำงาน (Dependency Injection): รับคลาส MainViewModel เข้ามาทาง Constructor 
+   เมื่อระบบเปิดแอปและเริ่มเรนเดอร์หน้าหลัก
+2. ผูกสายไฟข้อมูลหลัก (Data Binding): กำหนด BindingContext เพื่อให้การ์ดกระเป๋าเงิน (Pockets) 
+   ยอดเงินรวมทั้งหมด (TotalBalance) และลิสต์รายการล่าสุดในหน้า XAML สามารถดึงข้อมูลจาก ViewModel มาโชว์ได้
+3. ดักฟังวงจรชีวิตเพื่อรีเฟรชหน้าแรก (Lifecycle Trigger): ดักจับจังหวะที่ผู้ใช้สลับหน้าจอหรือเปิดกลับมาที่หน้าหลัก (OnAppearing)
+   เพื่อสั่งให้ ViewModel โหลดข้อมูลเงินล่าสุุดขึ้นมาคำนวณใหม่ทันที ตัวเลขยอดเงินในหน้าแรกจึงอัปเดตเรียลไทม์อยู่เสมอ
+=========================================================================================
+*/
+
+using SpendSmart.ViewModels; // นำเข้าพื้นที่ทำงานของ ViewModels เพื่อดึง MainViewModel มาใช้งาน
+
+namespace SpendSmart.Views
 {
+    // กำหนดให้เป็น partial class เพื่อให้ระบบนำโค้ดส่วนนี้ไปประกอบรวมร่างกับหน้าหน้าจอแสดงผล XAML (MainPage.xaml) ตอนรันแอป
     public partial class MainPage : ContentPage
     {
+        // สร้างตัวแปรภายในสำหรับเก็บตัว MainViewModel (สมองกลควบคุมข้อมูลหน้าหลัก)
         private readonly MainViewModel _viewModel;
 
+        /// <summary>
+        /// Constructor: ฟังก์ชันเริ่มต้นทำงานเมื่อแอปพลิเคชันเปิดเข้าสู่หน้าจอหลัก (Main Screen)
+        /// มีการใช้ระบบ Dependency Injection (DI) ส่งตัว MainViewModel เข้ามาให้ใช้งานอัตโนมัติ
+        /// </summary>
         public MainPage(MainViewModel viewModel)
         {
-            InitializeComponent();
-            _viewModel = viewModel;
+            InitializeComponent(); // คำสั่งบังคับของระบบเพื่อวาดและจัดเตรียมชิ้นส่วน UI ทั้งหมดจากการ์ด XAML 
+
+            _viewModel = viewModel; // นำระบบหน้าหลักที่ได้มา เก็บไว้ในตัวแปรประจำคลาสเพื่อเปิดใช้คำสั่งภายใน
+
+            // 🌟 จุดสลักสำคัญ: ผูก BindingContext ของหน้าจอนี้เข้ากับสมองกล ViewModel
+            // บรรทัดนี้จะทำให้องค์ประกอบในหน้า XAML (เช่น ตัวเลขยอดเงินรวม หรือหน้าต่างป๊อปอัพ Onboarding ต้อนรับผู้ใช้ใหม่)
+            // สามารถดึงข้อมูลและส่งคำสั่งนำทาง (Navigation) ไปทำงานใน MainViewModel ได้ทันที
             BindingContext = _viewModel;
         }
 
+        /// <summary>
+        /// ฟังก์ชันวงจรชีวิตหน้าจอ (Lifecycle Method): 
+        /// จะถูกเรียกทำงานโดยอัตโนมัติ "ทุกครั้ง" ที่ผู้ใช้เปิดหน้าหลักนี้ขึ้นมาโชว์บนหน้าจอมือถือ
+        /// </summary>
         protected override async void OnAppearing()
         {
-            base.OnAppearing();
-            // สั่งให้โหลดข้อมูลทุกครั้งที่เปิดหน้านี้ขึ้นมา
+            base.OnAppearing(); // สั่งให้โค้ดเริ่มต้นของระบบ ContentPage ทำงานตามปกติก่อน
+
+            // 🚀 จังหวะที่หน้าเปิดปุ๊บ สั่งงานแบบ Asynchronous ทันที (ไม่หน่วงหน้าจอ UI)
+            // ให้ ViewModel วิ่งไปโหลดข้อมูลกระเป๋าเงิน คำนวณยอดรวมใหม่ และดึงธุรกรรมล่าสุด 5 รายการจาก SQLite
+            // ช่วยให้ตัวเลขบนหน้าแรกอัปเดตสดใหม่ตลอดเวลา ไม่ว่าจะเพิ่งไปกดเพิ่มรายการ โอนเงิน หรือลบกระเป๋ามาจากหน้าอื่นก็ตามครับ
             await _viewModel.LoadDataAsync();
         }
     }

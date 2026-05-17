@@ -1,45 +1,80 @@
-﻿using CommunityToolkit.Mvvm.ComponentModel;
+﻿/*
+=========================================================================================
+[สรุปภาพรวมการทำงานของไฟล์ LoginViewModel.cs]
+ไฟล์นี้คือ "ผู้จัดการหน้าจอเข้าสู่ระบบ (Login Screen)" ทำหน้าที่ดูแลความปลอดภัยก่อนเข้าใช้งานแอปพลิเคชัน
+โดยใช้เทคโนโลยี Biometrics (การยืนยันตัวตนด้วยชีวมิติ) มีความสามารถหลักๆ ดังนี้:
+
+1. ตรวจสอบฮาร์ดแวร์: เช็กว่าโทรศัพท์มือถือของผู้ใช้รองรับและได้ตั้งค่าการสแกนลายนิ้วมือ/ใบหน้าไว้หรือไม่
+2. การยืนยันตัวตน (Authentication): เรียกใช้ระบบรักษาความปลอดภัยของมือถือ (OS) ให้เด้งหน้าต่างสแกนนิ้วมือ
+3. ระบบสำรอง (Fallback/Bypass): 
+   - หากผู้ใช้รันแอปบน Emulator หรือมือถือที่ไม่มีสแกนนิ้ว ระบบจะอนุญาตให้เข้าแอปได้ชั่วคราวเพื่อความสะดวกในการทดสอบ
+   - หากสแกนนิ้วไม่ผ่านหลายครั้ง อนุญาตให้ใช้รหัส PIN หรือ Password ของเครื่องแทนได้
+4. การนำทาง (Navigation): เมื่อยืนยันตัวตนสำเร็จ จะเปลี่ยนหน้าจอหลักของแอปไปที่ AppShell (หน้าแดชบอร์ดหลัก)
+=========================================================================================
+*/
+
+using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using Plugin.Fingerprint;
-using Plugin.Fingerprint.Abstractions;
+using Plugin.Fingerprint;               
+using Plugin.Fingerprint.Abstractions;  
 
 namespace SpendSmart.ViewModels
 {
+    // สืบทอด ObservableObject เพื่อรองรับระบบ MVVM (ให้หน้าจอ UI สื่อสารกับโค้ดหลังบ้านได้)
     public partial class LoginViewModel : ObservableObject
     {
+        /// <summary>
+        /// [ฟังก์ชันสั่งยืนยันตัวตน]
+        /// คำสั่งนี้จะถูกเรียกใช้เมื่อผู้ใช้กดปุ่ม "เข้าสู่ระบบ / สแกนนิ้ว" บนหน้าจอ Login
+        /// </summary>
         [RelayCommand]
         public async Task AuthenticateAsync()
         {
             try
             {
+                // 1. ตรวจสอบความพร้อมของระบบ: เช็กว่ามือถือเครื่องนี้มีเซนเซอร์สแกนนิ้ว และตั้งค่าไว้แล้วหรือไม่?
+                // (ส่งค่า true เข้าไปเพื่อบอกว่าอนุญาตให้ใช้รหัสผ่านสำรองของเครื่องแทนได้ด้วย)
                 var isAvailable = await CrossFingerprint.Current.IsAvailableAsync(true);
 
+                // กรณีที่ 1: เครื่องไม่มีสแกนนิ้ว หรือรันทดสอบบนโปรแกรมจำลอง (Emulator)
                 if (!isAvailable)
                 {
+                    // โชว์แจ้งเตือนให้ผู้ใช้ทราบว่าระบบสแกนนิ้วไม่พร้อมทำงาน
                     await Application.Current.MainPage.DisplayAlert(
                         "จำลองเข้าสู่ระบบ",
                         "เครื่องนี้ไม่พร้อมใช้งานสแกนนิ้วมือ จึงอนุญาตให้เข้าแอปชั่วคราว",
                         "ตกลง");
 
+                    // ทำการ Bypass (ทะลุ) ให้ผ่านเข้าแอปไปที่หน้า AppShell ได้เลย เพื่อไม่ให้แอปตัน
                     Application.Current.MainPage = new AppShell();
-                    return;
+                    return; // จบการทำงาน ไม่ต้องไปบรรทัดสแกนนิ้วด้านล่าง
                 }
 
+                // ==========================================
+                // 🌟 เริ่มต้นกระบวนการสแกนนิ้ว (กรณีเครื่องพร้อม)
+                // ==========================================
+
+                // 2. ตั้งค่าหน้าต่างป๊อปอัพสแกนนิ้วมือที่จะเด้งขึ้นมาให้ผู้ใช้เห็น
                 var request = new AuthenticationRequestConfiguration(
-                    "ปลดล็อก SpendSmart",
-                    "กรุณาสแกนลายนิ้วมือหรือใบหน้าเพื่อเข้าใช้งาน")
+                    "ปลดล็อก SpendSmart",                                  // หัวข้อ (Title) ของป๊อปอัพ
+                    "กรุณาสแกนลายนิ้วมือหรือใบหน้าเพื่อเข้าใช้งาน")        // คำอธิบาย (Reason) บอกผู้ใช้ว่าให้ทำอะไร
                 {
+                    // อนุญาตให้ผู้ใช้กดปุ่ม "ใช้รหัสผ่านแทน" (PIN/Pattern) หากนิ้วเปียกหรือสแกนไม่ติด
                     AllowAlternativeAuthentication = true
                 };
 
+                // 3. สั่งให้ฮาร์ดแวร์มือถือเริ่มทำงาน และรอรับผลลัพธ์ (สแกนผ่าน หรือ สแกนพลาด)
                 var result = await CrossFingerprint.Current.AuthenticateAsync(request);
 
+                // 4. ตรวจสอบผลลัพธ์การสแกน
                 if (result.Authenticated)
                 {
+                    // ถ้าสแกน "ผ่าน" (นิ้วมือถูกต้อง) -> สลับหน้าจอหลักของแอปไปที่ AppShell เพื่อเข้าใช้งาน
                     Application.Current.MainPage = new AppShell();
                 }
                 else
                 {
+                    // ถ้าสแกน "ไม่ผ่าน" หรือผู้ใช้กดยกเลิกป๊อปอัพ -> โชว์ข้อความเตือน และยังคงอยู่ที่หน้า Login ต่อไป
                     await Application.Current.MainPage.DisplayAlert(
                         "ไม่สำเร็จ",
                         "การยืนยันตัวตนล้มเหลว หรือถูกยกเลิก",
@@ -48,11 +83,13 @@ namespace SpendSmart.ViewModels
             }
             catch (Exception ex)
             {
+                // ดักจับข้อผิดพลาด (Fallback Safety): ป้องกันแอปดับ (Crash) กรณีฮาร์ดแวร์สแกนนิ้วมีปัญหา
                 await Application.Current.MainPage.DisplayAlert(
                     "เกิดข้อผิดพลาด",
                     $"ระบบสแกนนิ้วมือมีปัญหา: {ex.Message}",
                     "ตกลง");
 
+                // ในกรณีฉุกเฉินที่ระบบมีปัญหาจริงๆ ยอมปล่อยให้ผู้ใช้ทะลุเข้าแอปได้เพื่อไม่ให้เข้าข้อมูลตัวเองไม่ได้
                 Application.Current.MainPage = new AppShell();
             }
         }

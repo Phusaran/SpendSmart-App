@@ -32,5 +32,73 @@
                         BackgroundColor="#D4AF37" TextColor="White" CornerRadius="20" FontAttributes="Bold" WidthRequest="60"/>
             </Grid>
         </Frame>
+
+        <Grid Grid.Row="0" Grid.RowSpan="2"
+              BackgroundColor="#90000000"
+              IsVisible="{Binding IsAiPopupVisible}"
+              HorizontalOptions="Fill"
+              VerticalOptions="Fill">
+
+            <Frame BackgroundColor="White"
+                   CornerRadius="20"
+                   WidthRequest="320"
+                   VerticalOptions="Center"
+                   HorizontalOptions="Center"
+                   HasShadow="True"
+                   Padding="20"
+                   Margin="20">
+
+                <VerticalStackLayout Spacing="15">
+                    <Label Text="🤖 ตรวจสอบรายการจาก AI"
+                           FontAttributes="Bold"
+                           FontSize="18"
+                           HorizontalOptions="Center"
+                           TextColor="#2C3E50"/>
+
+                    <BoxView HeightRequest="1" BackgroundColor="#BDC3C7" HorizontalOptions="Fill"/>
+
+                    <Grid ColumnDefinitions="*, *">
+                        <Frame Grid.Column="0" BackgroundColor="#2ECC71" Padding="5" Margin="2" CornerRadius="5">
+                            <Label Text="รายรับ" TextColor="White" FontAttributes="Bold" HorizontalOptions="Center"/>
+                        </Frame>
+                        <Frame Grid.Column="1" BackgroundColor="#E74C3C" Padding="5" Margin="2" CornerRadius="5">
+                            <Label Text="รายจ่าย" TextColor="White" FontAttributes="Bold" HorizontalOptions="Center"/>
+                        </Frame>
+                    </Grid>
+
+                    <VerticalStackLayout Spacing="2">
+                        <Label Text="จำนวนเงิน (บาท)" FontSize="12" TextColor="#7F8C8D"/>
+                        <Entry Text="{Binding AiAmount}" Keyboard="Numeric" FontSize="16" FontAttributes="Bold" TextColor="#2C3E50"/>
+                    </VerticalStackLayout>
+
+                    <VerticalStackLayout Spacing="2">
+                        <Label Text="หมวดหมู่" FontSize="12" TextColor="#7F8C8D"/>
+                        <Entry Text="{Binding AiSubCategory}" FontSize="14" TextColor="#2C3E50"/>
+                    </VerticalStackLayout>
+
+                    <VerticalStackLayout Spacing="2">
+                        <Label Text="บันทึกช่วยจำ" FontSize="12" TextColor="#7F8C8D"/>
+                        <Entry Text="{Binding AiNote}" FontSize="14" TextColor="#2C3E50"/>
+                    </VerticalStackLayout>
+
+                    <VerticalStackLayout Spacing="2">
+                        <Label Text="หัก/เข้า จากกระเป๋าไหน?" FontSize="12" TextColor="#7F8C8D" FontAttributes="Bold"/>
+                        <Picker ItemsSource="{Binding Pockets}"
+                                ItemDisplayBinding="{Binding Name}"
+                                SelectedItem="{Binding SelectedPocket}" />
+                    </VerticalStackLayout>
+
+                    <Grid ColumnDefinitions="*, *" ColumnSpacing="10" Margin="0,10,0,0">
+                        <Button Grid.Column="0" Text="ยกเลิก" 
+                                BackgroundColor="#BDC3C7" TextColor="White" FontAttributes="Bold"
+                                Command="{Binding ClosePopupCommand}"/>
+                        <Button Grid.Column="1" Text="บันทึกเลย" 
+                                BackgroundColor="#2ECC71" TextColor="White" FontAttributes="Bold"
+                                Command="{Binding ConfirmTransactionCommand}"/>
+                    </Grid>
+                </VerticalStackLayout>
+            </Frame>
+        </Grid>
+
     </Grid>
 </ContentPage>
